@@ -1,12 +1,16 @@
-name: Enchant_RPG_SHOP
+name: ERS
 main: Enchant_RPG_SHOP\Enchant_RPG_SHOP
-version: 2.3.0
+version: 2.4.0
 api: [3.0.0,2.0.0]
 load: POSTWORLD
 author: slm47888
-depend: ["ZXDAKernel"]
+#softdepend:
+# - "ZXDAKernel"
 
 commands:
   附魔:
     usage: /附魔 帮助
     description: 附魔帮助
+  ERS:
+    usage: /ERS help
+    description: ERS help

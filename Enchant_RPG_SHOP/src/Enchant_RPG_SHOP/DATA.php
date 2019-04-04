@@ -8,7 +8,7 @@ class DATA
 	public function __construct(Main $Main,$file_name)
 	{
 		$dir = $Main->getDataFolder();
-		$file = new Config($dir.'ID/'.$file_name.'.yml',Config::YAML,[]);//附魔数据
+		$file = new Config($dir.'ID/'.$file_name.'.yml',Config::YAML,[]);
 		$this->name = $file->get('名字');
 		$this->id = $file->get('ID');
 		$this->pvp = $file->get('pvp生效');
