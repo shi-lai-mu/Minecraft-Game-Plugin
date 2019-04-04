@@ -181,7 +181,7 @@ class Main extends Base implements Listener
 				$sender->sendMessage('§b -◎ §a/岛屿 购买 [岛屿名字] [岛屿模型名字] §8< 购买一个岛屿 >');//ok
 				//岛主区
 				$sender->sendMessage('§b -◎ §a/岛屿 列表 §8< 查看自己所拥有的全部岛屿 >');//ok
-				$sender->sendMessage('§b -◎ §a/岛屿 回 [岛屿名字] §8< 传送到这个编号的岛屿 >');//ok
+				$sender->sendMessage('§b -◎ §a/岛屿 回 [岛屿名字/岛屿编号] §8< 传送回岛屿 >');//ok
 				$sender->sendMessage('§b -◎ §a/岛屿 分享 [添加/删除/列表] [岛屿名字] [玩家] §8< 岛屿互动权限设置 >');//ok
 				$sender->sendMessage('§b -◎ §a/岛屿 黑名单 [添加/删除/列表] [领地编号] [游戏名] §8< 岛屿黑名单系统操作 >');//ok
 				$sender->sendMessage('§b -◎ §a/岛屿 公共 [开/关] [岛屿名字] §8< 开关此编号岛屿为公共场所,所有人可互动 >');//ok
@@ -520,18 +520,26 @@ class Main extends Base implements Listener
 			{
 				if(!isset($args[1]))
 				{
-					$sender->sendMessage('§b -◎ §a/岛屿 回 [岛屿名字] §8< 传送到这个编号的岛屿 >');
+					$sender->sendMessage('§b -◎ §a/岛屿 回 [岛屿名字/岛屿编号] §8< 传送回岛屿 >');
 					return true;
 				}
-				if(!$this->SkyBlock->exists($args[1]))
+				$island_info = $this->SkyBlock->get('Player_IsIand_Name')[$name];
+				if(!isset($island_info[$args[1]]) and !in_array($args[1],$island_info))
 				{
-					$sender->sendMessage('§b -◎ §a不存在此编号领地!');
+					$sender->sendMessage('§b -◎ §a不存在此岛屿名称或编号!');
 					return true;
+				}
+				if(in_array($args[1],$island_info))
+				{
+					foreach($island_info as $keyname => $val)
+					{
+						if($val == $args[1]) $args[1] = $keyname;
+					}
 				}
 				$coordinates = explode(':',$this->SkyBlock->get($args[1]));
 				if($coordinates[4] != $name)
 				{
-					$sender->sendMessage('§b -◎ §a此编号主人为§e[ ' . $coordinates[4] . ' ]§a你不能传送过去!');
+					$sender->sendMessage('§b -◎ §a此岛屿主人为§e[ ' . $coordinates[4] . ' ]§a你不能传送过去!');
 					return true;
 				}
 				$world = $this->getServer()->getLevelbyName($coordinates[3]);
@@ -832,6 +840,11 @@ class Main extends Base implements Listener
 				{
 					$sender->sendMessage('§b -◎ §a/岛屿 购买 [岛屿名字] [模型名称] §8< 购买一个岛屿 >');
 					$sender->sendMessage('§b -◎ §9提示: /岛屿 模型 列表');
+					return true;
+				}
+				if($this->SkyBlock->exists($args[1]))
+				{
+					$sender->sendMessage('§b -◎ §c§e[名称: §5' . $args[1] . '§e]§c岛屿已被购买!');
 					return true;
 				}
 				$world = $sender->getLevel()->getFolderName();
@@ -1711,6 +1724,24 @@ class Main extends Base implements Listener
 			}
 		}
 	}
+
+	public function bancommand(PlayerCommandPreprocessEvent $event)
+	{
+		$player = $event->getPlayer();
+		$sendMessage = $event->getMessage();
+		$world = $player->getLevel()->getFolderName();
+		if(in_array($world,$this->Type_World_List) and !$player->isOp())
+		{
+			foreach($this->Set['禁止命令'] as $command)
+			{
+				if(strstr('/'.$command,$sendMessage))
+				{
+					$player->sendMessage('§b -◎ §8岛屿世界内不允许使用此指令!§b ◎-');
+					$event->setCancelled();
+				}
+			}
+		}
+	}
 		
 	public function setIsLand($Player_Name , $Expamd , $IsLand_Name , $world)
 	{
@@ -1846,8 +1877,13 @@ class Main extends Base implements Listener
 			$player->teleport(new Position($p_x,$p_y,$p_z,$this->getServer()->getLevelByName($world)));
 			$this->unbeibao($Player_Name);
 			if($DATA == 1) return $this->setIsLand($Player_Name , $Expamd , $IsLand_Name , $world);
-			$player->sendMessage('§e-> §6岛屿已生成,耗时:§c'.round($timetext,4).'§6秒');
-			$player->sendMessage('§e-> §6祝你空岛生存愉快!');
+			if($this->Set['购买岛屿显示内容'] == '关')
+			{
+				$player->sendMessage('§e-> §6岛屿已生成,耗时:§c'.round($timetext,4).'§6秒');
+				$player->sendMessage('§e-> §6祝你空岛生存愉快!');
+			} else {
+				$player->sendMessage(''.$this->Set['购买岛屿显示内容']);
+			}
 			for($a = 0;$a < count($this->Set['购买岛屿后工作台上的掉落物']);$a ++)
 			{
 				$item = explode(':',$this->Set['购买岛屿后工作台上的掉落物'][$a]);
@@ -1947,7 +1983,7 @@ class Main extends Base implements Listener
 		}
 		$this->b = new Config($this->getDataFolder() . 'set/Config.yml' , Config::YAML , array());
 		$set1 = array(
-			'配置版本' => '007',
+			'配置版本' => '010',
 			' ========== 基础设置 ==========' => '.',
 			'可购买岛屿' => 3,
 			'单个领地价格' => 10,
@@ -1974,7 +2010,8 @@ class Main extends Base implements Listener
 			'背包' => '开',
 			'禁止流动' => '开',
 			'领地显示' => '开',
-			'IsLandWorld-BanCommand' => array('tpa' , 'home' , 'warp'),
+			'购买岛屿显示内容' => '关',
+			'禁止命令' => array('tpa' , 'home' , 'warp'),
 			'管理员' => array()
 		);
 		if(!$this->b->exists('设置'))
@@ -1988,6 +2025,7 @@ class Main extends Base implements Listener
 			if($set['配置版本'] != $set1['配置版本'])
 			{
 				$this->getLogger()->info('§4发现配置文件为其他版本,正在智能覆盖此版本[' . $set1['配置版本'] . ']!这会尽量保留原设置,从而加入新的设置!');
+				unset($set['IsLandWorld-BanCommand']);
 				$as = array_merge($set1,$set);
 				$as['配置版本'] = $set1['配置版本'];
 				$this->b->set('设置',$as);

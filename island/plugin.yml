@@ -1,6 +1,6 @@
 name: island
 main: island\Main
-version: 2.2.7
+version: 2.2.8
 api: [3.0.0,2.0.0]
 load: POSTWORLD
 author: shilaimu
