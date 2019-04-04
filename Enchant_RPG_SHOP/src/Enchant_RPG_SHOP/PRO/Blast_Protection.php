@@ -1,10 +1,10 @@
 <?php
 namespace Enchant_RPG_SHOP\PRO;
 
-class Protect
+class Blast_Protection
 {
-	public $name = '保护';	//附魔名字
-	public $id = 0;	//附魔ID[谨慎修改]
+	public $name = '爆炸保护';	//附魔名字
+	public $id = 3;	//附魔ID[谨慎修改]
 	public $pvp = Null;	//true pvp | false pve | null all
 	public $independent = False;	//是否为独立属性
 	public $destroyed = False;	//玩家使用时销毁此类装备
@@ -15,39 +15,28 @@ class Protect
 	public $protect = True;	//此属性护甲
 	public $shooting = False;	//此属性为射
 	public $hand = False;	//此属性为手持品
-	public $info = '减少多数的伤害';	//附魔介绍
+	public $info = '减少爆炸的伤害';	//附魔介绍
 	public $gamemode = -1;	//允许被什么模式使用
 	/* RPG-自定义 */
 	public $damage = 0;	//能量
 	public $burning = 0;	//燃烧秒数
 	public $CD = 0;	//CD时间
 	public $combo = 0;	//连续击杀提示
-	public $scope = 0;	//伤害范围
+	public $scope = 10;	//伤害范围
 	public $Effect = 0;	//药水范围
 	public $vampire = 0;	//吸血
 	public $superposition = 0;	//连击叠加伤害
 	public $rebound_D = 0;//反弹攻击
 	public $CDtip = False;	//是否CD剩余提示
 	public $vampire_d = False;	//吸血额外伤害
-	public $ai = True;	//是否覆盖原版附魔
+	public $ai = False;	//是否覆盖原版附魔
 	public $Tip = False;	//连击提示
 	public $swim = False;//眩晕
 	public $note = False;//特殊属性
 	
 	public function getdefense($Level)//防御
 	{
-		if($Level <= 30)
-		{
-			return 0.4 * $Level;
-		}
-		else if($Level > 30 and $Level < $this->getEnchantLevel()['max'])
-		{
-			return 0.5 * $Level;
-		}
-		else
-		{
-			return 0;
-		}
+		return Null;
 	}
 	
 	public function getScores($Level)//增加的分数
@@ -58,13 +47,13 @@ class Protect
 		}
 		else
 		{
-			return 1.7 * $Level;
+			return 2 * $Level;
 		}
 	}
 	
 	public function getEnchantLevel()//附魔等级范围
 	{
-		return Array('min' => 0 , 'max' => 999999999);
+		return Array('min' => 0 , 'max' => 3);
 	}
 	
 	public function getItemId()//附魔装备范围

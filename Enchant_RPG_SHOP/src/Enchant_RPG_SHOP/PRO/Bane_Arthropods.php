@@ -1,21 +1,21 @@
 <?php
 namespace Enchant_RPG_SHOP\PRO;
 
-class Protect
+class Bane_Arthropods
 {
-	public $name = '保护';	//附魔名字
-	public $id = 0;	//附魔ID[谨慎修改]
-	public $pvp = Null;	//true pvp | false pve | null all
+	public $name = '节肢杀手';	//附魔名字
+	public $id = 11;	//附魔ID[谨慎修改]
+	public $pvp = False;	//true pvp | false pve | null all
 	public $independent = False;	//是否为独立属性
 	public $destroyed = False;	//玩家使用时销毁此类装备
 	public $discarded = True;	//是否可丢弃
 	public $setname = False;	//是否可设置装备名字
-	public $Food = False;	//此属性为食物击
+	public $Food = False;	//此属性为食物
 	public $passive = False;	//此属性为被动
-	public $protect = True;	//此属性护甲
-	public $shooting = False;	//此属性为射
-	public $hand = False;	//此属性为手持品
-	public $info = '减少多数的伤害';	//附魔介绍
+	public $protect = False;	//此属性护甲
+	public $shooting = False;	//此属性为射击
+	public $hand = True;	//此属性为手持品
+	public $info = '每级提升对节肢生物的1.25攻击';	//附魔介绍
 	public $gamemode = -1;	//允许被什么模式使用
 	/* RPG-自定义 */
 	public $damage = 0;	//能量
@@ -27,8 +27,8 @@ class Protect
 	public $vampire = 0;	//吸血
 	public $superposition = 0;	//连击叠加伤害
 	public $rebound_D = 0;//反弹攻击
-	public $CDtip = False;	//是否CD剩余提示
 	public $vampire_d = False;	//吸血额外伤害
+	public $CDtip = False;	//是否CD剩余提示
 	public $ai = True;	//是否覆盖原版附魔
 	public $Tip = False;	//连击提示
 	public $swim = False;//眩晕
@@ -36,18 +36,7 @@ class Protect
 	
 	public function getdefense($Level)//防御
 	{
-		if($Level <= 30)
-		{
-			return 0.4 * $Level;
-		}
-		else if($Level > 30 and $Level < $this->getEnchantLevel()['max'])
-		{
-			return 0.5 * $Level;
-		}
-		else
-		{
-			return 0;
-		}
+		return 0;
 	}
 	
 	public function getScores($Level)//增加的分数
@@ -58,7 +47,7 @@ class Protect
 		}
 		else
 		{
-			return 1.7 * $Level;
+			return 2 * $Level;
 		}
 	}
 	
@@ -69,7 +58,7 @@ class Protect
 	
 	public function getItemId()//附魔装备范围
 	{
-		return [298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,316,317];
+		return [272,267,283,276,275,258];
 	}
 	
 	public function getDamage($Level)//攻击力
@@ -102,8 +91,20 @@ class Protect
 		return NULL;
 	}
 	
-	public function CODE()//[禁止修改]
+	public function CODE($Level,$True = False)//[禁止修改]
 	{
-		return NULL;
+		if(!$True) return 0;
+		if($Level <= 30)
+		{
+			return 1.252 * $Level;
+		}
+		else if($Level > 30 and $Level < $this->getEnchantLevel()['max'])
+		{
+			return 1.25 * $Level;
+		}
+		else
+		{
+			return 0;
+		}
 	}
 }

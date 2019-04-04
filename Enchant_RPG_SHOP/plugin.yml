@@ -1,10 +1,10 @@
 name: Enchant_RPG_SHOP
 main: Enchant_RPG_SHOP\Enchant_RPG_SHOP
-version: 2.0.5
+version: 2.1.0
 api: [3.0.0,2.0.0]
 load: POSTWORLD
 author: slm47888
-#depend: ["ZXDAKernel"]
+depend: ["ZXDAKernel"]
 
 commands:
   附魔:

@@ -1,10 +1,10 @@
 <?php
 namespace Enchant_RPG_SHOP\PRO;
 
-class Protect
+class Projectile_protection
 {
-	public $name = '保护';	//附魔名字
-	public $id = 0;	//附魔ID[谨慎修改]
+	public $name = '弹射物保护';	//附魔名字
+	public $id = 4;	//附魔ID[谨慎修改]
 	public $pvp = Null;	//true pvp | false pve | null all
 	public $independent = False;	//是否为独立属性
 	public $destroyed = False;	//玩家使用时销毁此类装备
@@ -15,14 +15,14 @@ class Protect
 	public $protect = True;	//此属性护甲
 	public $shooting = False;	//此属性为射
 	public $hand = False;	//此属性为手持品
-	public $info = '减少多数的伤害';	//附魔介绍
+	public $info = '减少爆炸的伤害';	//附魔介绍
 	public $gamemode = -1;	//允许被什么模式使用
 	/* RPG-自定义 */
 	public $damage = 0;	//能量
 	public $burning = 0;	//燃烧秒数
 	public $CD = 0;	//CD时间
 	public $combo = 0;	//连续击杀提示
-	public $scope = 0;	//伤害范围
+	public $scope = 10;	//伤害范围
 	public $Effect = 0;	//药水范围
 	public $vampire = 0;	//吸血
 	public $superposition = 0;	//连击叠加伤害
@@ -38,11 +38,11 @@ class Protect
 	{
 		if($Level <= 30)
 		{
-			return 0.4 * $Level;
+			return 0.2 * $Level;
 		}
 		else if($Level > 30 and $Level < $this->getEnchantLevel()['max'])
 		{
-			return 0.5 * $Level;
+			return 0.1 * $Level;
 		}
 		else
 		{
@@ -58,7 +58,7 @@ class Protect
 		}
 		else
 		{
-			return 1.7 * $Level;
+			return 2 * $Level;
 		}
 	}
 	

@@ -1,10 +1,10 @@
 <?php
 namespace Enchant_RPG_SHOP\PRO;
 
-class Protect
+class Fire_protection
 {
-	public $name = '保护';	//附魔名字
-	public $id = 0;	//附魔ID[谨慎修改]
+	public $name = '火焰保护';	//附魔名字
+	public $id = 1;	//附魔ID[谨慎修改]
 	public $pvp = Null;	//true pvp | false pve | null all
 	public $independent = False;	//是否为独立属性
 	public $destroyed = False;	//玩家使用时销毁此类装备
@@ -15,7 +15,7 @@ class Protect
 	public $protect = True;	//此属性护甲
 	public $shooting = False;	//此属性为射
 	public $hand = False;	//此属性为手持品
-	public $info = '减少多数的伤害';	//附魔介绍
+	public $info = '减少火焰烧伤的时间';	//附魔介绍
 	public $gamemode = -1;	//允许被什么模式使用
 	/* RPG-自定义 */
 	public $damage = 0;	//能量
@@ -36,29 +36,18 @@ class Protect
 	
 	public function getdefense($Level)//防御
 	{
-		if($Level <= 30)
-		{
-			return 0.4 * $Level;
-		}
-		else if($Level > 30 and $Level < $this->getEnchantLevel()['max'])
-		{
-			return 0.5 * $Level;
-		}
-		else
-		{
-			return 0;
-		}
+		return 0;
 	}
 	
 	public function getScores($Level)//增加的分数
 	{
 		if($Level <= 30)
 		{
-			return 1.3 * $Level;
+			return 0.3 * $Level;
 		}
 		else
 		{
-			return 1.7 * $Level;
+			return 1.2 * $Level;
 		}
 	}
 	
@@ -102,8 +91,19 @@ class Protect
 		return NULL;
 	}
 	
-	public function CODE()//[禁止修改]
+	public function CODE($Level = 1)//[禁止修改]
 	{
-		return NULL;
+		if($Level <= 30)
+		{
+			return 0.2 * $Level;
+		}
+		else if($Level > 30 and $Level < $this->getEnchantLevel()['max'])
+		{
+			return 0.15 * $Level;
+		}
+		else
+		{
+			return 0;
+		}
 	}
 }
