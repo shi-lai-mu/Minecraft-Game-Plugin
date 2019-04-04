@@ -37,36 +37,14 @@ namespace Enchant_RPG_SHOP;
 	use pocketmine\level\Level;
 	use pocketmine\level\particle\HeartParticle;
 
-	use Enchant_RPG_SHOP\api;
 	use Enchant_RPG_SHOP\Enchant\TXT;
 	use onebone\economyapi\EconomyAPI;
-	use Enchant_RPG_SHOP\PRO\Protect;
-	use Enchant_RPG_SHOP\PRO\Fire_protection;
-	use Enchant_RPG_SHOP\PRO\Feather_Falling;
-	use Enchant_RPG_SHOP\PRO\Blast_Protection;
-	use Enchant_RPG_SHOP\PRO\Projectile_protection;
-	use Enchant_RPG_SHOP\PRO\Thorns;
-	use Enchant_RPG_SHOP\PRO\Respiration;
-	use Enchant_RPG_SHOP\PRO\Depth_Strider;
-	use Enchant_RPG_SHOP\PRO\Aqua_Affinity;
-	use Enchant_RPG_SHOP\PRO\Sharpness;
-	use Enchant_RPG_SHOP\PRO\Smite;
-	use Enchant_RPG_SHOP\PRO\Bane_Arthropods;
-	use Enchant_RPG_SHOP\PRO\Knock_Back;
-	use Enchant_RPG_SHOP\PRO\Fire_Aspect;
-	use Enchant_RPG_SHOP\PRO\Looting;
-	use Enchant_RPG_SHOP\PRO\Efficiency;
-	use Enchant_RPG_SHOP\PRO\Silk_Touch;
-	use Enchant_RPG_SHOP\PRO\Unbreaking;
-	use Enchant_RPG_SHOP\PRO\Fortune;
-	use Enchant_RPG_SHOP\PRO\Power;
-	use Enchant_RPG_SHOP\PRO\Punch;
-	use Enchant_RPG_SHOP\PRO\Flame;
-	use Enchant_RPG_SHOP\PRO\Infinity;
-	use Enchant_RPG_SHOP\PRO\Care_sea;
-	use Enchant_RPG_SHOP\PRO\Bait;
+	use Enchant_RPG_SHOP\DATA;
 	use \ZXDAConnector\Main as ZXDAConnector;
-
+/*
+	2017/7/25 by slm47888 in 2.3.0
+	conten 
+*/
 class Enchant_RPG_SHOP extends PluginBase implements Listener
 {
 	public $info = Array();
@@ -85,21 +63,32 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 	
 	public function onLoad()
 	{
-		ZXDA::init(584,$this);
-		ZXDA::requestCheck();
+		//ZXDA::init(584,$this);
+		//ZXDA::requestCheck();
 	}
-	
-	public function onEnable()
+
+    /**
+     *
+     */
+    public function onEnable()
 	{
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		self::$instance = $this;
 		$this->getLogger()->info('§e ------------------------------------- ');
 		$this->getLogger()->info('§6授权成功!§3感谢支持本插件...');
 		$this->getLogger()->info('§2Enchant-RPG-SHOP §d'.$this->getDescription()->getVersion().'§3 加载中... ');
-		$this->ZXDA_load();
+		//$this->ZXDA_load();
 		$config = new TXT($this);
 		$dir = $this->getDataFolder();
-		@mkdir($dir.'ID/');
+		if(!file_exists($dir.'ID/'))
+		{
+			@mkdir($dir.'ID/');
+			$this->getLogger()->info('§6正在装填自带附魔文件...');
+			for($a = 0;$a <= 24; $a ++)
+			{
+				file_put_contents($dir.'ID/'.$a.'.yml',stream_get_contents($this->getResource($a.'.yml')));
+			}
+		}
 		$this->Enchant = new Config($dir . 'Enchant_NBT.yml',Config::YAML,[]);//NBT
 		$this->set = new Config($dir . 'Enchant_Config.yml',Config::YAML,[]);//配置
 		$this->b = new Config($dir . 'Config.yml',Config::YAML,[]);//木牌
@@ -109,56 +98,11 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 		$this->DATA = new Config($dir . 'Enchant.yml',Config::YAML,[]);//附魔数据
 		$this->getServer()->getScheduler()->scheduleRepeatingTask(new CallbackTask([$this,'timer']),20);
 		$this->getLogger()->info('§e ------------------------------------- ');
-		for($a=0;$a<=24;$a++)
-		{
-			var_dump($a);
-			$dir = $this->getDataFolder();
-			$this->DATA = new Config($dir . 'ID/'.$a.'.yml',Config::YAML,[]);//附魔数据
-			$f = $this->Get_Enchant_Class($a);
-			$arr = [
-				'名字' => $f->name,
-				'ID' => $f->id,
-				'物品' => $f->getItemId(),
-				'攻击' => $f->getDamage(1),
-				'防御' => $f->getdefense(1),
-				'分数' => $f->getScores(1),
-				'等级' => $f->getEnchantLevel(),
-				'详细' => $f->info,
-				'pvp生效' => $f->pvp,
-				'独立' => $f->independent,
-				'销毁' => $f->destroyed,
-				'可丢弃' => $f->discarded,
-				'设名字' => $f->setname,
-				'为食物' => $f->Food,
-				'为被动' => $f->passive,
-				'为护甲' => $f->protect,
-				'为射击' => $f->shooting,
-				'为手持' => $f->hand,
-				'模式' => $f->gamemode,
-				'能量' => $f->damage,
-				'燃烧' => $f->burning,
-				'冷却' => $f->CD,
-				'连击' => $f->combo,
-				'伤害范围' => $f->scope,
-				'药水范围' => $f->Effect,
-				'攻击吸血' => $f->vampire,
-				'连击伤害' => $f->superposition,
-				'反弹伤害' => $f->rebound_D,
-				'冷却提示' => $f->CDtip,
-				'吸血伤害' => $f->vampire_d,
-				'覆盖AI' => $f->ai,
-				'连击提示' => $f->Tip,
-				'眩晕' => $f->swim,
-				'增强' => $f->note
-			];
-			$this->DATA->setAll($arr);
-			$this->DATA->save();
-		}
 	}
 
 	public function onDisable()
 	{
-		$this->getLogger()->info('§a 正在保存关键的RPG数据...');
+		//$this->getLogger()->info('§a 正在保存关键的RPG数据...');
 	}
 	
 	public function timer()
@@ -390,7 +334,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 					return $player->sendMessage('§4-> §c'.$item_name.'已附魔高于'.$enchant['LV'].'级的'.$new->name);
 				}
 				$news = $this->get_Enchant_Class($enchant['ID']);
-				if(!in_array($ID,$new->getItemId()))
+				if(!in_array($ID,$new->getItemId))
 				{
 					return $player->sendMessage('§4-> §c'.$item_name.'不支持'.$enchant['类'].$new->name);
 				}
@@ -425,14 +369,17 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 				$Hand->setNamedTag($nbt);
 				foreach($Enchant as $k => $v)
 				{
-					$news = $this->get_Enchant_Class($k,$v);
-					if($news !== Null)
+					if(is_numeric($k))
 					{
-						if(!$news->ai)
+						$news = $this->get_Enchant_Class($k,$v);
+						if($news !== Null)
 						{
-							$enchantment = Enchantment::getEnchantment($k);
-							$enchantment->setLevel($v);
-							$Hand->addEnchantment($enchantment);
+							if(!$news->ai)
+							{
+								$enchantment = Enchantment::getEnchantment($k);
+								$enchantment->setLevel($v);
+								$Hand->addEnchantment($enchantment);
+							}
 						}
 					}
 				}
@@ -532,54 +479,6 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 		}
 		return $set;
 	}
-
-	public function ItemConsumeEvent(PlayerItemConsumeEvent $event)
-	{
-		$item = $event->getItem();
-		$id = $item->getId();
-		$player = $event->getPlayer();
-		$name = $player->getName();
-		$Enchant = Array();
-		if(!empty($item->getEnchantments()))
-		{
-			foreach($item->getEnchantments() as $enchantment)
-			{
-				$Enchant[$enchantment->getId()] = $enchantment->getLevel();
-			}
-		}
-		if(count($Enchant) > 0)
-		{
-			$enchant_names = "";
-			if(isset($item->getNamedTag()['display']['strings']))
-			{
-				$nbt_id = $item->getNamedTag()['display']['strings'];
-				$texts = $this->Enchant->get($nbt_id);
-				if(isset($texts[30]))
-				{
-					if($this->info[$name]['魔法'] == $this->info[$name]['魔法上限'] * (@$player->getXpLevel() / 2))
-					{
-						$player->sendMessage("§b＊§6魔法苹果§b＊ §e你的魔法值处于巅峰,无需回复!");
-						$event->setCancelled();
-					}
-					else
-					{
-						$this->info[$name]['魔法'] += ($texts[30] * 10);
-						if($this->info[$name]['魔法'] > $this->info[$name]['魔法上限'] * (@$player->getXpLevel() / 2))
-						{
-							$this->info[$name]['魔法'] = $this->info[$name]['魔法上限'] * (@$player->getXpLevel() / 2);
-						}
-					}
-				}
-				if(isset($texts[31]))
-				{
-					$timess = ($texts[31] * 3) / ($texts[31] * 2);
-					$this->info[$name]['Note']['治疗汤'] = Array('时间' => (Time() + ($texts[31] * 2)),'已回' => 0,'间隔' => 0,'等级' => $texts[31]);
-					$player->sendMessage("§b＊§6治疗汤§b＊ §e在§5".$this->untime($texts[31] * 2,true)."§e内你的生命将持续恢复,最高§5$texts[31]点§e!");
-					$player->sendMessage('§b※§6RPG§b※ 你得到一个新的属性"恢复血量 1d/2s"!');
-				}
-			}
-		}
-	}
 	
 	public function ItemSpawn(ItemSpawnEvent $event)
 	{
@@ -593,7 +492,6 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 		}
 	}
   
-
 	public function EntityShootBow(EntityShootBowEvent $event)
 	{
 		$Player = $event->getEntity();
@@ -720,21 +618,23 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 						if($new === Null) continue;
 						$this->item->exists($Damager_Hand->getID()) ? $item_name = $this->item->get($Damager_Hand->getID()) : $item_name = '未知';
 						$this->log('-> 正在处理 '.$item_name .' 中的 '.$new->name.' 附魔...');
+						//var_dump([$PVP === True,  $new->pvp === True , $PVP === False,  $new->pvp === False , $new->pvp === NULL]);
 						if($PVP === True &&  $new->pvp === True || $PVP === False &&  $new->pvp === False || $new->pvp === NULL)
 						{
+						//var_dump([$new->gamemode === -1 ,$D_Gamemode === $new->gamemode, $new->hand === True]);
 							if($new->gamemode === -1 || $D_Gamemode === $new->gamemode && $new->hand === True)
 							{
 								$Smite = ['Zombie','PigZombie','ZombieVillager'];
 								if(in_Array($Entity->getName(),$Smite) && $new->id == 10)
 								{
-									$event->setDamage($event->getDamage() + $new->CODE($lv,True));
-									$this->log('判 亡灵类生物 攻击增加 '.$new->CODE($lv,True));
+									$event->setDamage($event->getDamage() + $new->getDamage * $lv);
+									$this->log('判 亡灵类生物 攻击增加 '.$new->getDamage * $lv);
 								}
 								$Bane = ['Skeleton','Spider'];
 								if(in_Array($Entity->getName(),$Bane) && $new->id == 11)
 								{
-									$event->setDamage($event->getDamage() + $new->CODE($lv,True));
-									$this->log('判 节肢类生物 攻击增加 '.$new->CODE($lv,True));
+									$event->setDamage($event->getDamage() + $new->getDamage * $lv);
+									$this->log('判 节肢类生物 攻击增加 '.$new->getDamage * $lv);
 								}
 								if($new->CD - ($lv * 0.1) > 0)
 								{
@@ -807,7 +707,10 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 										$sw->attack($ev->getFinalDamage(), $ev);
 									}
 								}
-								$event->setDamage($event->getDamage() + $new->CODE($lv));
+								if($new->id != 10 and $new->id != 11)
+								{
+									$event->setDamage($event->getDamage() + $new->getDamage * $lv);
+								}
 								if($new->scope > 0)
 								{
 									foreach($Damager->getLevel()->getEntities() as $sw)
@@ -843,7 +746,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 											{
 												if($sw->distance(new Vector3($Damager->x,$Damager->y,$Damager->z)) <= $new->Effect + ($lv * 0.1))
 												{
-													$this->Effect($new->addEEffect(),$sw);
+													$this->Effect($new->addEEffect,$sw);
 												}
 											}
 										}
@@ -851,14 +754,10 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 										{
 											if($sw->distance(new Vector3($Damager->x,$Damager->y,$Damager->z)) <= $new->Effect)
 											{
-												$this->Effect($new->addEEffect(),$sw,$lv * 0.1);
+												$this->Effect($new->addEEffect,$sw,$lv * 0.1);
 											}
 										}
 									}
-								}
-								if($new->note > 0)
-								{
-									$new->NOTE();
 								}
 							}
 						}
@@ -891,13 +790,13 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 												{
 													if(isset($this->gj['弓箭']['射出']) and isset($this->gj['弓箭']['射出'][$Enchant->getName()]))
 													{
-														$event->setDamage($event->getDamage() - $new->getdefense($lv));
+														$event->setDamage($event->getDamage() - $new->getdefense * $lv);
 													}
 												}
 												if($new->destroyed == True) $Entity->getInventory()->setItemInHand(new Item(0,0,0));
-												$event->setDamage($event->getDamage() - $new->getdefense($lv));
-												$this->log('判 防御[内置]为 '.$new->getdefense($lv));
-												$protect += $new->getdefense($lv);
+												$event->setDamage($event->getDamage() - $new->getdefense * $lv);
+												$this->log('判 防御[内置]为 '.$new->getdefense * $lv);
+												$protect += $new->getdefense * $lv;
 												if($new->note > 0) $new->NOTE();
 												if($new->rebound_D > 0)
 												{
@@ -1008,33 +907,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 	
 	public function Get_Enchant_Class($id = 0,$lv = 1)
 	{
-		$new = Null;
-		if($id == 0) $new = new Protect($lv);
-		if($id == 1) $new = new Fire_protection($lv);
-		if($id == 2) $new = new Feather_Falling($lv);
-		if($id == 3) $new = new Blast_Protection($lv);
-		if($id == 4) $new = new Projectile_protection($lv);
-		if($id == 5) $new = new Thorns($lv);
-		if($id == 6) $new = new Respiration($lv);
-		if($id == 7) $new = new Depth_Strider($lv);
-		if($id == 8) $new = new Aqua_Affinity($lv);
-		if($id == 9) $new = new Sharpness($lv);
-		if($id == 10) $new = new Smite($lv);
-		if($id == 11) $new = new Bane_Arthropods($lv);
-		if($id == 12) $new = new Knock_Back($lv);
-		if($id == 13) $new = new Fire_Aspect($lv);
-		if($id == 14) $new = new Looting($lv);
-		if($id == 15) $new = new Efficiency($lv);
-		if($id == 16) $new = new Silk_Touch($lv);
-		if($id == 17) $new = new Unbreaking($lv);
-		if($id == 18) $new = new Fortune($lv);
-		if($id == 19) $new = new Power($lv);
-		if($id == 20) $new = new Punch($lv);
-		if($id == 21) $new = new Flame($lv);
-		if($id == 22) $new = new Infinity($lv);
-		if($id == 23) $new = new Care_sea($lv);
-		if($id == 24) $new = new Bait($lv);
-			
+		$new = new DATA($this,$id);
 		return $new;
 	}
 
@@ -1068,6 +941,12 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 		$player = $event->getPlayer();
 		if(!$event->isCancelled())
 		{
+			$Block = $event->getBlock();
+			$X = $Block->getX();
+			$Y = $Block->getY();
+			$Z = $Block->getZ();
+			$Level = $Block->getLevel();
+			$ID = $Block->getID();
 			$block = $event->getBlock();
 			$ItemInHand = $player->getInventory()->getItemInHand();
 			$Enchant = $this->get_Enchant($ItemInHand);
@@ -1078,46 +957,37 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 			}
 			if(count($Enchant) > 0)
 			{
-				$this->log('-> 破坏方块实体手持物发现 '.count($Enchant).' 个附魔,正在处理中...');
-				foreach($Enchant as $id => $lv)
+				$this->item->exists($ItemInHand->getID()) ? $item_name = $this->item->get($ItemInHand->getID()) : $item_name = '未知';
+				if(isset($Enchant[17]))
 				{
-					$new = $this->get_Enchant_Class($id,$lv);
-					if($new === Null) continue;
-					$this->item->exists($ItemInHand->getID()) ? $item_name = $this->item->get($ItemInHand->getID()) : $item_name = '未知';
-					$this->log('-> 正在处理 '.$item_name .' 中的 '.$new->name.' 附魔...');
-					if(in_array(17,$Enchant))
+					if(mt_rand(1,100) < $Enchant[17])
 					{
-						if(mt_rand(1,100) < $Enchant[17])
+						if($ItemInHand->getDamage() > 0)
 						{
-							if($ItemInHand->getDamage() > 0)
+							if(mt_rand(1,100) < 50)
 							{
-								if(mt_rand(1,100) < 50)
-								{
-									$ItemInHand->setDamage($ItemInHand->getDamage() - 1);
-									$player->getInventory()->setItemInHand($ItemInHand);
-								}
+								$ItemInHand->setDamage($ItemInHand->getDamage() - 1);
+								$player->getInventory()->setItemInHand($ItemInHand);
 							}
 						}
 					}
-					if(in_array(18,$Enchant_Id))
-					{
-						if(in_array(16,$Enchant_Id))
-						{
-							return;
-						}
-						$Block = $event->getBlock();
-						$X = $Block->getX();
-						$Y = $Block->getY();
-						$Z = $Block->getZ();
-						$Level = $Block->getLevel();
-						$ID = $Block->getID();
-						$new = $this->get_Enchant_Class(18);
-						$IDS = $new->NOTE();
-						if(!isset($IDS[$ID])) return;
-						$numbers = $Enchant[18];
-						$numbers = $numbers/2 - mt_rand(0,$numbers/2);
-						$numbers < 0 ? $numbers = 0 : $Level->dropItem(new Vector3($X,$Y,$Z),new Item(explode(':',$IDS[$ID])[0],explode(':',$IDS[$ID])[1],$numbers));
-					}
+				}
+				if(isset($Enchant[18]) and !isset($Enchant[16]))
+				{
+					if($player->getGamemode() != 0) return;
+					$IDS = [
+						16 => '263:0',
+						56 => '264:0',
+						21 => '351:4',
+						73 => '311:0',
+						89 => '348:0',
+						129 => '388:0',
+						153 => '406:0'
+					];
+					if(!isset($IDS[$ID])) return;
+					$numbers = $Enchant[18];
+					$numbers = $numbers/2 - mt_rand(0,$numbers/2);
+					$numbers < 0 ? $numbers = 0 : $Level->dropItem(new Vector3($X,$Y,$Z),new Item(explode(':',$IDS[$ID])[0],explode(':',$IDS[$ID])[1],$numbers));
 				}
 			}
 		}
@@ -1128,30 +998,11 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 			$X = $event->getBlock()->getX();
 			$Y = $event->getBlock()->getY();
 			$Z = $event->getBlock()->getZ();
-			if(!$this->b->exists($X . ':' . $Y . ':' . $Z))
-			{
-				return;
-			}
+			$this->log('121');
+			if(!$this->b->exists($X . ':' . $Y . ':' . $Z)) return;
+			$this->log('121');
 			$sign = $this->b->get($X . ':' . $Y . ':' . $Z);
-			if(isset($sign['一键修复']))
-			{
-				if(!$player->isOP())
-					{
-						$player->sendMessage('§4-> §c非管理员不能拆除附魔商店木牌!');
-						$event->setCancelled();
-						return;
-					}
-					$this->b->remove($X . ':' . $Y . ':' . $Z);
-					$this->b->save();
-					$player->sendMessage('§4-> §c已拆除§e 附魔商店!');
-				}
-			if(
-			isset($sign['附魔商店']) Or
-			isset($sign['强化商店']) Or
-			isset($sign['回收商店']) Or
-			isset($sign['修复商店']) Or
-			isset($sign['出售商店'])
-			)
+			if( isset($sign['类']))
 			{
 				if(!$player->isOP())
 				{
@@ -1216,7 +1067,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 							$new = $this->get_Enchant_Class($key);
 							if($new !== Null and $new->ai)
 							{
-								$fs += $new->getScores($value);
+								$fs += $new->getScores * $value;
 								if(isset($lv[$value])) $value = $lv[$value];
 								$text_d .= "§7$new->name $value\n";
 							}
@@ -1248,7 +1099,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 		}			
 	}
 	
-	public function ZXDA_load()
+	function ZXDA_load()
 	{
 		$data=ZXDA::getInfo();
 		ZXDA::tokenCheck('MTMzNjg4NzkwMDgzMTI3NTA5NTY1OTQ4MjYzMjc1NTk5MjkyMDI0MTY3MDc3MzA3NTYxMTg2NjY0MjA1MzAxMjY1MjQzMDQ5MTQzNDk1Mjg2NzcwMjg0MjE2OTQ4MzIzMDY2MjE3NTQ0NjU4ODg4OTc2MDQ5ODk4MTA2OTk4NTk4Njc0OTIzOTIxNzU0MTk3OTA3MzM0ODAzOTEwNDM0NjE4MDk3MTc1NDg1OTIzNTUxNTU0ODQ5MjE2NTczMzAwOTA5NjcwMzE1NTE5MjA3MzI4MzMwMjc4MDMwMTU4NDkyMTcwMzYzOTQ1MjczNTY4OTM4ODcwMDQ2NjMxNDk5NzQ2ODQ5MTIyNzAzMDkzNjA0ODYzODQwMTc5NTMxMDk0NDIyNjI1MDQ3OTA4NTg3NjczNTk5');
@@ -1266,7 +1117,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 				$sender->sendMessage('§e #§6 /附魔 白名单 帮助');
 				$sender->sendMessage('§e #§6 /附魔 附魔券 帮助');
 				$sender->sendMessage('§e #§6 /附魔 商店 帮助');
-				$sender->sendMessage('§e #§6 /附魔 镶嵌 [宝石编号] [被镶嵌装备编号]');
+				$sender->sendMessage('§e #§6 /附魔 重命名 [名字] §5<重命名手中的附魔物品>');
 				$sender->sendMessage('§e§1##=§2##=§3##=§5##=§6##=§7##=§a##=§b##=§c##=§e##=§4##');
 				return true;
 			}
@@ -1275,10 +1126,12 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 				if(!isset($args[1]) || $args[1] == '帮助' || !isset($args[5]))
 				{
 					$sender->sendMessage('§e§1##=§2##=§3##=§5##=§6##=§7##=§a##=§b##=§c##=§e##=§4##');
-					$sender->sendMessage('§6 ["魔"] = 附魔ID §d|§6 ["级"] = 附魔等级 §d|§6 ["货"] = 货币类型 §d|§6 ["需"] = 需货币量 §d|§6 ["围"] = 等级范围 §d|§6 ["高"] = 最高等级 §d|§6 ["耐"] = 耐久变化 §d|§6 ["率"] = 成功几率');
+					$sender->sendMessage('§6 ["魔"] = 附魔ID §d|§6 ["级"] = 附魔等级 §d|§6 ["货"] = 货币类型 §d|§6 ["需"] = 需货币量');
+					$sender->sendMessage('§6 ["围"] = 等级范围 §d|§6 ["高"] = 最高等级 §d|§6 ["耐"] = 耐久变化 §d|§6 ["率"] = 成功几率');
 					$sender->sendMessage('§6 灰色为选填,默认值为白色!');
-					$sender->sendMessage('§e #§6 /附魔 商店 附魔 [魔] [级] [货] [需] §7[耐§f无变化§7] [率§f100§7] §b<添加附魔商店>');
-					$sender->sendMessage('§e #§6 /附魔 商店 回收 [魔] [级] [货] [需] §b<添加回收商店>');
+					$sender->sendMessage('§e #§6 /附魔 商店 附魔 [魔] [级] [需] §7[货§f 金币 §7] §7[耐§f无变化§7] [率§f100§7] §b<添加附魔商店>');
+					$sender->sendMessage('§e #§6 /附魔 商店 回收 [魔] [级] [需] §7[货§f 金币 §7] §b<添加回收商店>');
+					$sender->sendMessage('§e #§6 /附魔 商店 强化 [魔] [级] [高] [需] §7[货§f 金币 §7] §b<添加回收商店>');
 					$sender->sendMessage('§e§1##=§2##=§3##=§5##=§6##=§7##=§a##=§b##=§c##=§e##=§4##');
 					return true;
 				}
@@ -1288,6 +1141,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 				if(!is_numeric($args[5])) return $sender->sendMessage('§e #§6 [需] 必须为数字!');
 				if($args[1] == '附魔')
 				{
+					if(!$sender->isOp()) return $sender->sendMessage('§e #§6 非管理员无权限!');
 					if(!isset($args[6])) $args[6] = '无变化';
 					if(!isset($args[7])) $args[7] = 100;
 					$args[8] = $sender->level->getFolderName();
@@ -1298,196 +1152,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 			}
 			if($args[0] == '镶嵌')
 			{
-				if(!isset($args[2]))
-				{
-					$sender->sendMessage('§e #§6 /附魔 镶嵌 [宝石编号] [被镶嵌装备编号]');
-					return true;
-				}
-				if(!$this->Enchant->exists($args[1]))
-				{
-					$sender->sendMessage('§e ID错误-> 在服务器内未发现此[宝石ID],他可能不存在或被使用...');
-					return true;
-				}
-				if(!$this->Enchant->exists($args[2]))
-				{
-					$sender->sendMessage('§e ID错误-> 在服务器内未发现此[装备ID],他可能不存在或消失...');
-					return true;
-				}
-				$arg1 = False;
-				$arg2 = False;
-				for($index = 0; $index < $sender->getInventory()->getSize(); $index ++)
-				{
-					$ItemInHand = $sender->getInventory()->getItem($index);
-					if(isset($ItemInHand->getNamedTag()['display']['strings']))
-					{
-						$string = $ItemInHand->getNamedTag()['display']['strings'];
-						if($string == $args[1])
-						{
-							$arg1 = True;
-						}
-						if($string == $args[2])
-						{
-							$arg2 = True;
-						}
-					}
-				}
-				if(!$arg1)
-				{
-					$sender->sendMessage('§e 宝石错误-> 此宝石不在你身上,无法进行镶嵌!');
-					return true;
-				}
-				if(!$arg2)
-				{
-					$sender->sendMessage('§e 装备警告-> 此装备不在你身上!已切换为离线玩家装备镶嵌模式');
-					return true;
-				}
-				$en_1 = $this->Enchant->get($args[1]);
-				$en_2 = $this->Enchant->get($args[2]);
-				if(count($en_1) != 1)
-				{
-					$sender->sendMessage('§e 宝石错误-> 此宝石不止附带一种属性!是错误的物品!');
-					return true;
-				}
-				if(!isset($en_2['镶嵌']) || !isset($en_2['镶嵌']['max']))
-				{
-					$sender->sendMessage('§e 装备错误-> 此装备未附带正确的RPG属性,无法完成镶嵌!');
-					return true;
-				}
-				if((count($en_2['镶嵌']) - 1) >= $en_2['镶嵌']['max'])
-				{
-					$sender->sendMessage('§e 提示-> 此装备可镶嵌凹槽已用尽!');
-					return true;
-				}
-				foreach($en_2['镶嵌'] as $m => $t)
-				{
-					foreach($en_1 as $k => $v)
-					{
-						if($k == $m&& $v == $t)
-						{
-							$sender->sendMessage('§e 提示-> 此装备已镶嵌'.$v.'级的"'.$this->getEnchantName($k).'"!');
-							return true;
-						}
-					}
-				}
-				$k = 33;
-				$v = 1;
-				foreach($en_1 as $k => $v)
-				{
-					$en_2['镶嵌'][$k] = $v;
-					$this->Enchant->set($args[2],$en_2);
-					$this->Enchant->remove($args[1]);
-					$this->Enchant->save();
-				}
-				for($index = 0; $index < $sender->getInventory()->getSize(); $index ++)
-				{
-					$ItemInHand = $sender->getInventory()->getItem($index);
-					if(isset($ItemInHand->getNamedTag()['display']['strings']))
-					{
-						$string = $ItemInHand->getNamedTag()['display']['strings'];
-						if($string == $args[1])
-						{
-							$sender->getInventory()->setItem($index,Item::get(Item::AIR, 0, 1));
-						}
-					}
-				}
-				$sender->sendMessage('§e 提示-> 此装备 镶嵌"'.$this->getEnchantName($k).'"成功!获得额外属性:'.$this->buff_txt($k,$v).'!');
-				return true;
-			}
-			if($args[0] == '镶嵌')
-			{
-				if(!isset($args[2]))
-				{
-					$sender->sendMessage('§e #§6 /附魔 镶嵌 [宝石编号] [被镶嵌装备编号]');
-					return true;
-				}
-				if(!$this->Enchant->exists($args[1]))
-				{
-					$sender->sendMessage('§e ID错误-> 在服务器内未发现此[宝石ID],他可能不存在或被使用...');
-					return true;
-				}
-				if(!$this->Enchant->exists($args[2]))
-				{
-					$sender->sendMessage('§e ID错误-> 在服务器内未发现此[装备ID],他可能不存在或消失...');
-					return true;
-				}
-				$arg1 = False;
-				$arg2 = False;
-				for($index = 0; $index < $sender->getInventory()->getSize(); $index ++)
-				{
-					$ItemInHand = $sender->getInventory()->getItem($index);
-					if(isset($ItemInHand->getNamedTag()['display']['strings']))
-					{
-						$string = $ItemInHand->getNamedTag()['display']['strings'];
-						if($string == $args[1])
-						{
-							$arg1 = True;
-						}
-						if($string == $args[2])
-						{
-							$arg2 = True;
-						}
-					}
-				}
-				if(!$arg1)
-				{
-					$sender->sendMessage('§e 宝石错误-> 此宝石不在你身上,无法进行镶嵌!');
-					return true;
-				}
-				if(!$arg2)
-				{
-					$sender->sendMessage('§e 装备警告-> 此装备不在你身上!已切换为离线玩家装备镶嵌模式');
-					return true;
-				}
-				$en_1 = $this->Enchant->get($args[1]);
-				$en_2 = $this->Enchant->get($args[2]);
-				if(count($en_1) != 1)
-				{
-					$sender->sendMessage('§e 宝石错误-> 此宝石不止附带一种属性!是错误的物品!');
-					return true;
-				}
-				if(!isset($en_2['镶嵌']) || !isset($en_2['镶嵌']['max']))
-				{
-					$sender->sendMessage('§e 装备错误-> 此装备未附带正确的RPG属性,无法完成镶嵌!');
-					return true;
-				}
-				if((count($en_2['镶嵌']) - 1) >= $en_2['镶嵌']['max'])
-				{
-					$sender->sendMessage('§e 提示-> 此装备可镶嵌凹槽已用尽!');
-					return true;
-				}
-				foreach($en_2['镶嵌'] as $m => $t)
-				{
-					foreach($en_1 as $k => $v)
-					{
-						if($k == $m&& $v == $t)
-						{
-							$sender->sendMessage('§e 提示-> 此装备已镶嵌'.$v.'级的"'.$this->getEnchantName($k).'"!');
-							return true;
-						}
-					}
-				}
-				$k = 33;
-				$v = 1;
-				foreach($en_1 as $k => $v)
-				{
-					$en_2['镶嵌'][$k] = $v;
-					$this->Enchant->set($args[2],$en_2);
-					$this->Enchant->remove($args[1]);
-					$this->Enchant->save();
-				}
-				for($index = 0; $index < $sender->getInventory()->getSize(); $index ++)
-				{
-					$ItemInHand = $sender->getInventory()->getItem($index);
-					if(isset($ItemInHand->getNamedTag()['display']['strings']))
-					{
-						$string = $ItemInHand->getNamedTag()['display']['strings'];
-						if($string == $args[1])
-						{
-							$sender->getInventory()->setItem($index,Item::get(Item::AIR, 0, 1));
-						}
-					}
-				}
-				$sender->sendMessage('§e 提示-> 此装备 镶嵌"'.$this->getEnchantName($k).'"成功!获得额外属性:'.$this->buff_txt($k,$v).'!');
+				return $sender->sendMessage('§e #§e此版本镶嵌不可用!');
 				return true;
 			}
 			if($args[0] == '白名单')
@@ -1572,6 +1237,27 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 					$sender->sendMessage('§e -->§6 共扫描到' . $player_bumer . '个名字!');
 					return true;
 				}
+			}
+			if($args[0] == '重命名')
+			{
+				if(!isset($args[1])) return $sender->sendMessage('§e #§6 /附魔 重命名 [名字] §5<重命名手中的附魔物品>');
+				$Hand = $sender->getInventory()->getItemInHand();
+				if(isset($Hand->getNamedTag()['display']['strings']))
+				{
+					$nbt_id = $Hand->getNamedTag()['display']['strings'];
+					if($this->Enchant->exists($nbt_id))
+					{
+						$texts = $this->Enchant->get($nbt_id);
+						$texts['Name'] = $args[1];
+						$this->Enchant->set($nbt_id,$texts);
+						$this->Enchant->save();
+						$sender->sendMessage('§e #§6成功重命名手持§b['.$nbt_id.']§6为§b['.$args[1].']§6!');
+						$this->updateInt($sender);
+						return true;
+					}
+				}
+				$sender->sendMessage('§e 手持非RPG附魔物品!');
+				return true;
 			}
 			if($args[0] == '附魔券')
 			{
@@ -1799,7 +1485,7 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 
 	function log($txt = ' ')
 	{
-		$this->getLogger()->warning('[开发者模式] -> '.$txt);
+		if($this->set->get('设置')['开发者模式'] == '开') $this->getLogger()->warning('[开发者模式] -> '.$txt);
 	}
 	
 	public function getAllEnction($player)
@@ -2013,37 +1699,43 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 
 	function getEXP($player)
 	{
-		if($this->getServer()->getName() == 'Tesseract') return $player->getTotalXp();
+		$name = $this->getServer()->getName();
+		if($name == 'Tesseract' || $name == 'GenisysPro') return $player->getTotalXp();
 		return $player->getExp();
 	}
 
 	function delEXP($player,int $EXP)
 	{
-		if($this->getServer()->getName() == 'Tesseract') return $player->setTotalXp($this->getEXP($player) - $EXP);
+		$name = $this->getServer()->getName();
+		if($name == 'Tesseract' || $name == 'GenisysPro') return $player->setTotalXp($this->getEXP($player) - $EXP);
 		return $player->setExp($this->getEXP($player) - $EXP);
 	}
 
 	function addEXP($player,int $EXP)
 	{
-		if($this->getServer()->getName() == 'Tesseract') return $player->setTotalXp($this->getEXP($player) + $EXP);
+		$name = $this->getServer()->getName();
+		if($name == 'Tesseract' || $name == 'GenisysPro') return $player->setTotalXp($this->getEXP($player) + $EXP);
 		return $player->setExp($this->getEXP($player) + $EXP);
 	}
 
 	function getLV($player)
 	{
-		if($this->getServer()->getName() == 'Tesseract') return $player->getXpLevel();
+		$name = $this->getServer()->getName();
+		if($name == 'Tesseract' || $name == 'GenisysPro') return $player->getXpLevel();
 		return $player->getExpLevel();
 	}
 
 	function delLV($player,int $LV)
 	{
-		if($this->getServer()->getName() == 'Tesseract') return $player->takeXpLevel(-$LV);
+		$name = $this->getServer()->getName();
+		if($name == 'Tesseract' || $name == 'GenisysPro') return $player->takeXpLevel(-$LV);
 		return $player->setExpLevel($this->getEXP($player) - $LV);
 	}
 
 	function addLV($player,int $LV)
 	{
-		if($this->getServer()->getName() == 'Tesseract') return $player->addXpLevel($LV);
+		$name = $this->getServer()->getName();
+		if($name == 'Tesseract' || $name == 'GenisysPro') return $player->addXpLevel($LV);
 		return $player->setExpLevel($this->getEXP($player) + $LV);
 	}
 
@@ -2148,182 +1840,362 @@ class Enchant_RPG_SHOP extends PluginBase implements Listener
 		return False;
 	}
 
-}
+	/////////////////////////////////////
+	///       PLUGIN API PUBLIC       ///
+	/////////////////////////////////////
 
+
+	public function Player_Info($player)//获取成员信息
+	{
+		if(!isset($this->info[$player])) return False;
+		return $this->info[$player];
+	}
+
+	public function getMoney($player)//获取附魔券
+	{
+		return $this->Money->get($name);
+	}
+
+	public function setMoney($player,int $Number)//获取附魔券
+	{
+		$this->Money->set($name,$Number);
+		$this->Money->save();
+	}
+
+}
 class ZXDA
 {
-		private static $_PID=false;
-		private static $_TOKEN=false;
-		private static $_PLUGIN=null;
-		private static $_VERIFIED=false;
-		private static $_API_VERSION=5012;
-
-		public static function init($pid,$plugin)
+	const API_VERSION=5013;
+	
+	private static $_PLUGIN=null;
+	
+	public static function init($pid,$plugin)
+	{
+		if(!\is_numeric($pid))
 		{
-			if(!is_numeric($pid))
-			{
-				self::killit('参数错误,请传入正确的PID(0001)');
-				exit();
-			}
-			self::$_PLUGIN=$plugin;
-			if(self::$_PID!==false && self::$_PID!=$pid)
-			{
-				self::killit('非法访问(0002)');
-				exit();
-			}
-			self::$_PID=$pid;
-		}
-
-		public static function checkKernelVersion()
-		{
-			if(self::$_PID===false)
-			{
-				self::killit('SDK尚未初始化(0003)');
-				exit();
-			}
-			if(!class_exists('\\ZXDAKernel\\Main',false))
-			{
-				self::killit('请到 https://pl.zxda.net/ 下载安装最新版ZXDA Kernel后再使用此插件(0004)');
-				exit();
-			}
-			$version=\ZXDAKernel\Main::getVersion();
-			if($version<self::$_API_VERSION)
-			{
-				self::killit('当前ZXDA Kernel版本太旧,无法使用此插件,请到 https://pl.zxda.net/ 下载安装最新版后再使用此插件(0005)');
-				exit();
-			}
-			return $version;
-		}
-
-		public static function isTrialVersion()
-		{
-			try
-			{
-				self::checkKernelVersion();
-				return \ZXDAKernel\Main::isTrialVersion(self::$_PID);
-			}
-			catch(\Exception $err)
-			{
-				@file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'0007_data.dump',var_export($err,true));
-				self::killit('未知错误(0007),错误数据已保存到 0007_data.dump 中,请提交到群内获取帮助');
-			}
-		}
-
-		public static function requestCheck()
-		{
-			try
-			{
-				self::checkKernelVersion();
-				self::$_VERIFIED=false;
-				self::$_TOKEN=sha1(uniqid());
-				if(!\ZXDAKernel\Main::requestAuthorization(self::$_PID,self::$_PLUGIN,self::$_TOKEN))
-				{
-					self::killit('请求授权失败,请检查PID是否已正确传入(0006)');
-					exit();
-				}
-			}
-			catch(\Exception $err)
-			{
-				@file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'0007_data.dump',var_export($err,true));
-				self::killit('未知错误(0007),错误数据已保存到 0007_data.dump 中,请提交到群内获取帮助');
-			}
-		}
-
-		public static function tokenCheck($key)
-		{
-			try
-			{
-				self::checkKernelVersion();
-				self::$_VERIFIED=false;
-				$manager=self::$_PLUGIN->getServer()->getPluginManager();
-				if(!($plugin=$manager->getPlugin('ZXDAKernel')) instanceof \ZXDAKernel\Main)
-				{
-					self::killit('ZXDA Kernel加载失败,请检查插件是否已正常安装(0008)');
-				}
-				if(!$manager->isPluginEnabled($plugin))
-				{
-					$manager->enablePlugin($plugin);
-				}
-				$key=base64_decode($key);
-				if(($token=\ZXDAKernel\Main::getResultToken(self::$_PID))===false)
-				{
-					self::killit('请勿进行非法破解(0009)');
-				}
-				if(self::rsa_decode(base64_decode($token),$key,768)!=sha1(strrev(self::$_TOKEN)))
-				{
-					self::killit('插件Key错误,请更新插件或联系作者(0010)');
-				}
-				self::$_VERIFIED=true;
-			}
-			catch(\Exception $err)
-			{
-				@file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'0007_data.dump',var_export($err,true));
-				self::killit('未知错误(0007),错误数据已保存到 0007_data.dump 中,请提交到群内获取帮助');
-			}
-		}
-
-		public static function isVerified()
-		{
-			return self::$_VERIFIED;
-		}
-
-		public static function getInfo()
-		{
-			try
-			{
-				self::checkKernelVersion();
-				$manager=self::$_PLUGIN->getServer()->getPluginManager();
-				if(!($plugin=$manager->getPlugin('ZXDAKernel')) instanceof \ZXDAKernel\Main)
-				{
-					self::killit('ZXDA Kernel加载失败,请检查插件是否已正常安装(0008)');
-				}
-				if(($data=\ZXDAKernel\Main::getPluginInfo(self::$_PID))===false)
-				{
-					self::killit('请勿进行非法破解(0009)');
-				}
-				if(count($data=explode(',',$data))!=2)
-				{
-					return array(
-				'success'=>false,
-				'message'=>'未知错误');
-				}
-				return array(
-					'success'=>true,
-					'version'=>base64_decode($data[0]),
-					'update_info'=>base64_decode($data[1]));
-			}
-			catch(\Exception $err)
-			{
-				@file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'0007_data.dump',var_export($err,true));
-				self::killit('未知错误(0007),错误数据已保存到 0007_data.dump 中,请提交到群内获取帮助');
-			}
-		}
-
-		public static function killit($msg)
-		{
-			if(self::$_PLUGIN===null)
-			{
-				echo('抱歉,插件授权验证失败[SDK:'.self::$_API_VERSION.']\n附加信息:'.$msg);
-			}
-			else
-			{
-				@self::$_PLUGIN->getLogger()->warning('§e抱歉,插件授权验证失败[SDK:'.self::$_API_VERSION.']');
-				@self::$_PLUGIN->getLogger()->warning('§e附加信息:'.$msg);
-				@self::$_PLUGIN->getServer()->forceShutdown();
-			}
+			self::unknownError(10003);
 			exit();
 		}
-
-
-		//RSA加密算法实现
-		public static function rsa_encode($message,$modulus,$keylength=1024,$isPriv=true){$result=array();while(strlen($msg=substr($message,0,$keylength/8-5))>0){$message=substr($message,strlen($msg));$result[]=self::number_to_binary(self::pow_mod(self::binary_to_number(self::add_PKCS1_padding($msg,$isPriv,$keylength/8)),'65537',$modulus),$keylength/8);unset($msg);}return implode('***&&&***',$result);}
-		public static function rsa_decode($message,$modulus,$keylength=1024){
-			$result=array();foreach(explode('***&&&***',$message) as $message){$result[]=self::remove_PKCS1_padding(self::number_to_binary(self::pow_mod(self::binary_to_number($message),'65537',$modulus),$keylength/8),$keylength/8);unset($message);}return implode('',$result);}
-		private static function pow_mod($p,$q,$r){$factors=array();$div=$q;$power_of_two=0;while(bccomp($div,'0')==1){$rem=bcmod($div,2);$div=bcdiv($div,2);if($rem){array_push($factors,$power_of_two);}$power_of_two++;}$partial_results=array();$part_res=$p;$idx=0;foreach($factors as $factor){while($idx<$factor){$part_res=bcpow($part_res,'2');$part_res=bcmod($part_res,$r);$idx++;}array_push($partial_results,$part_res);}$result='1';foreach($partial_results as $part_res){$result=bcmul($result,$part_res);$result=bcmod($result,$r);}return $result;}
-		private static function add_PKCS1_padding($data,$isprivateKey,$blocksize){$pad_length=$blocksize-3-strlen($data);if($isprivateKey){$block_type="\x02";$padding='';for($i=0;$i<$pad_length;$i++){$rnd=mt_rand(1,255);$padding .= chr($rnd);}}else{$block_type="\x01";$padding=str_repeat("\xFF",$pad_length);}return "\x00".$block_type.$padding."\x00".$data;}
-		private static function remove_PKCS1_padding($data,$blocksize){assert(strlen($data)==$blocksize);$data=substr($data,1);if($data{0}=='\0'){return '';}assert(($data{0}=="\x01") || ($data{0}=="\x02"));$offset=strpos($data,"\0",1);return substr($data,$offset+1);}
-		private static function binary_to_number($data){$radix='1';$result='0';for($i=strlen($data)-1;$i>=0;$i--){$digit=ord($data{$i});$part_res=bcmul($digit,$radix);$result=bcadd($result,$part_res);$radix=bcmul($radix,'256');}return $result;}
-		private static function number_to_binary($number,$blocksize){$result='';$div=$number;while($div>0){$mod=bcmod($div,'256');$div=bcdiv($div,'256');$result=chr($mod).$result;}return str_pad($result,$blocksize,"\x00",STR_PAD_LEFT);}
+		self::ks('PID',$pid);
+		self::$_PLUGIN=$plugin;
+	}
+	
+	public static function killit($msg)
+	{
+		if(self::$_PLUGIN===\null)
+		{
+			echo('抱歉,插件授权验证失败[SDK:'.self::API_VERSION."]:\n".$msg);
+		}
+		else
+		{
+			@self::$_PLUGIN->getLogger()->warning('§e抱歉,插件授权验证失败[SDK:'.self::API_VERSION.']:');
+			@self::$_PLUGIN->getLogger()->warning('§e'.$msg);
+			@self::$_PLUGIN->getServer()->forceShutdown();
+		}
+		@\pocketmine\kill(\getmypid());
+		exit();
+	}
+	
+	public static function getInfo()
+	{
+		try
+		{
+			self::checkKernelVersion();
+			$manager=self::$_PLUGIN->getServer()->getPluginManager();
+			if(!($plugin=$manager->getPlugin('ZXDAKernel')) instanceof \ZXDAKernel\Main)
+			{
+				self::unknownError(10010);
+				exit();
+			}
+			if(($data=\ZXDAKernel\Main::getPluginInfo(self::ks('PID')))===\false)
+			{
+				self::unknownError(10011);
+				exit();
+			}
+			if(\count($data=\explode(',',$data))!=2)
+			{
+				return array(
+					'success'=>\false,
+					'message'=>'未知错误');
+			}
+			return array(
+				'success'=>\true,
+				'version'=>\base64_decode($data[0]),
+				'update_info'=>\base64_decode($data[1]));
+		}
+		catch(\Exception $err)
+		{
+			@\file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'error.dump',\var_export($err,\true));
+			self::unknownError(10012);
+			exit();
+		}
+	}
+	
+	public static function tokenCheck($key)
+	{
+		try
+		{
+			self::checkKernelVersion();
+			$manager=self::$_PLUGIN->getServer()->getPluginManager();
+			if(!($plugin=$manager->getPlugin('ZXDAKernel')) instanceof \ZXDAKernel\Main)
+			{
+				self::unknownError(10013);
+			}
+			if(!$manager->isPluginEnabled($plugin))
+			{
+				$manager->enablePlugin($plugin);
+			}
+			$key=\base64_decode($key);
+			if(($token=\ZXDAKernel\Main::getResultToken(self::ks('PID')))===\false)
+			{
+				self::unknownError(10014);
+			}
+			$token=self::rsa_decode(\base64_decode($token),$key,768);
+			if(self::kv('TOKEN',$token)!==\true)
+			{
+				self::unknownError(10015);
+			}
+		}
+		catch(\Exception $err)
+		{
+			@\file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'error.dump',\var_export($err,\true));
+			self::unknownError(10009);
+			exit();
+		}
+	}
+	
+	public static function requestCheck()
+	{
+		try
+		{
+			self::checkKernelVersion();
+			if(self::kv('TOKEN')!==\null)
+			{
+				self::unknownError(10006);
+				exit();
+			}
+			self::kv('TOKEN',\sha1(\strrev($t=\sha1(\uniqid().\var_export($_SERVER,\true)))));
+			if(!@\ZXDAKernel\Main::requestAuthorization(self::ks('PID'),self::$_PLUGIN,\substr($t.'Moe',0,-3)))
+			{
+				self::unknownError(10007);
+				exit();
+			}
+		}
+		catch(\Exception $err)
+		{
+			@\file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'error.dump',\var_export($err,\true));
+			self::unknownError(10008);
+			exit();
+		}
+	}
+	
+	public static function isTrialVersion()
+	{
+		try
+		{
+			self::checkKernelVersion();
+			return \ZXDAKernel\Main::isTrialVersion(self::ks('PID'));
+		}
+		catch(\Exception $err)
+		{
+			@\file_put_contents(self::$_PLUGIN->getServer()->getDataPath().'error.dump',\var_export($err,\true));
+			self::unknownError(10016);
+			exit();
+		}
+	}
+	
+	public static function checkKernelVersion()
+	{
+		if(self::ks('PID')===\false)
+		{
+			self::unknownError(10004);
+			exit();
+		}
+		if(!\class_exists('\\ZXDAKernel\\Main'))
+		{
+			self::killit('请到 https://pl.zxda.net/ 下载并安装最新版ZXDA Kernel后再使用此插件');
+			exit();
+		}
+		$version=@\ZXDAKernel\Main::getVersion();
+		if($version<self::API_VERSION)
+		{
+			self::killit('当前ZXDA Kernel版本太旧,请到 https://pl.zxda.net/ 下载并安装最新版ZXDA Kernel后再使用此插件');
+			exit();
+		}
+		return $version;
+	}
+	
+	private static function ks($key,$val=null)
+	{
+		static $storage=array();
+		if(\is_numeric($key))
+		{
+			self::unknownError(10001);
+			exit();
+		}
+		if(isset($storage[$key]))
+		{
+			if($val!==\null)
+			{
+				self::unknownError(10002);
+				exit();
+			}
+		}
+		else if($val===\null)
+		{
+			return \null;
+		}
+		else
+		{
+			$storage[$key]=$val;
+		}
+		return $storage[$key];
+	}
+	
+	private static function kv($key,$val=null)
+	{
+		static $storage=array();
+		if(\is_numeric($key))
+		{
+			self::unknownError(10005);
+			exit();
+		}
+		if(isset($storage[$key]))
+		{
+			return $storage[$key]===$val;
+		}
+		else if($val===\null)
+		{
+			return \null;
+		}
+		else
+		{
+			$storage[$key]=$val;
+		}
+		return \false;
+	}
+	
+	private static function unknownError($code)
+	{
+		self::killit('未知错误[S-'.$code.'],请访问 https://pl.zxda.net/docs/autherr 获取帮助');
+	}
+	
+	//////////////////////////
+	
+	public static function rsa_encode($message,$modulus,$keylength=1024,$isPriv=\true)
+    {
+        $result=array();
+        while(\strlen($msg=\substr($message,0,$keylength/8-5))>0)
+        {
+            $message=\substr($message,\strlen($msg));
+            $result[]=self::number_to_binary(self::pow_mod(self::binary_to_number(self::add_PKCS1_padding($msg,$isPriv,$keylength/8)),'65537',$modulus),$keylength/8);
+            unset($msg);
+        }
+        return \implode('***&&&***',$result);
+    }
+	
+    public static function rsa_decode($message,$modulus,$keylength=1024)
+    {
+        $result=array();
+        foreach(\explode('***&&&***',$message) as $message)
+        {
+            $result[]=self::remove_PKCS1_padding(self::number_to_binary(self::pow_mod(self::binary_to_number($message),'65537',$modulus),$keylength/8),$keylength/8);
+            unset($message);
+        }
+        return \implode('',$result);
+    }
+	
+    private static function pow_mod($p,$q,$r)
+    {
+        $factors=array();
+        $div=$q;
+        $power_of_two=0;
+        while(\bccomp($div,'0')==1)
+        {
+            $rem=\bcmod($div,2);
+            $div=\bcdiv($div,2);
+            if($rem)
+            {
+                \array_push($factors,$power_of_two);
+            }
+            $power_of_two++;
+        }
+        $partial_results=array();
+        $part_res=$p;
+        $idx=0;
+        foreach($factors as $factor)
+        {
+            while($idx<$factor)
+            {
+                $part_res=\bcpow($part_res,'2');
+                $part_res=\bcmod($part_res,$r);
+                $idx++;
+            }
+            \array_push($partial_results,$part_res);
+        }
+        $result='1';
+        foreach($partial_results as $part_res)
+        {
+            $result=\bcmul($result,$part_res);
+            $result=\bcmod($result,$r);
+        }
+        return $result;
+    }
+	
+    private static function add_PKCS1_padding($data,$isprivateKey,$blocksize)
+    {
+        $pad_length=$blocksize-3-\strlen($data);
+        if($isprivateKey)
+        {
+            $padding="\x00\x02";
+            for($i=0; $i<$pad_length; $i++)
+            {
+                $padding.=\chr(\mt_rand(1,255));
+            }
+        }
+        else
+        {
+            $padding="\x00\x01".\str_repeat("\xFF",$pad_length);
+        }
+        return $padding."\x00".$data;
+    }
+	
+    private static function remove_PKCS1_padding($data,$blocksize)
+    {
+        \assert(\strlen($data)==$blocksize);
+        $data=\substr($data,1);
+        if($data{0}=="\0")
+        {
+            return '';
+        }
+        \assert($data{0}=="\x01" || $data{0}=="\x02");
+        $offset=\strpos($data,"\0",1);
+        return \substr($data,$offset+1);
+    }
+	
+    private static function binary_to_number($data)
+    {
+        $radix='1';
+        $result='0';
+        for($i=\strlen($data)-1;$i>=0;$i--)
+        {
+            $result=\bcadd($result,\bcmul(\ord($data{$i}),$radix));
+            $radix=\bcmul($radix,'256');
+        }
+        return $result;
+    }
+	
+    private static function number_to_binary($number,$blocksize)
+    {
+        $result='';
+        $div=$number;
+        while($div>0)
+        {
+            $result=\chr(\bcmod($div,'256')).$result;
+            $div=\bcdiv($div,'256');
+        }
+        return \str_pad($result,$blocksize,"\x00",\STR_PAD_LEFT);
+    }
 }
 /*
 	看到此代码说明您已经解密或通过其他手段得到本插件源码!
