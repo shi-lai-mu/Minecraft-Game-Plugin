@@ -1,0 +1,12 @@
+name: island
+main: island\Main
+version: 2.2.7
+api: [3.0.0,2.0.0]
+load: POSTWORLD
+author: shilaimu
+depend: ["ZXDAKernel"]
+
+commands:
+  岛屿:
+    usage: /岛屿 帮助
+    description: 查看空岛相关指令
