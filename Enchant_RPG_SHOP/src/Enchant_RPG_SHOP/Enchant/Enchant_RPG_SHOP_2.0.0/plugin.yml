@@ -1,0 +1,12 @@
+name: Enchant_RPG_SHOP
+main: Enchant_RPG_SHOP\Enchant_RPG_SHOP
+version: 2.0.5
+api: [3.0.0,2.0.0]
+load: POSTWORLD
+author: slm47888
+#depend: ["ZXDAKernel"]
+
+commands:
+  附魔:
+    usage: /附魔 帮助
+    description: 附魔帮助
