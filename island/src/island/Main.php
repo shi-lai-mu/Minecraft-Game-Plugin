@@ -93,14 +93,16 @@ use pocketmine\entity\XPOrb;
 	use pocketmine\event\entity\EntityDamageEvent;
 	use pocketmine\event\entity\EntityDamageByEntityEvent;
 /*
- V2.2.7 start the update 2017/7/9
-	*		修复生成岛屿后，物品在生存背包
-	*		修复空岛世界可创造
-	*		修复空岛世界可生存飞行
-	*		优化区块算法
-	*		修复授权
-*/
-/*
+ V2.2.9 start the update 2017/7/29
+	*		岛屿管理员 添加权限-无视岛屿购买数量 ok
+	*		岛屿管理员 添加权限-无视拓展岛屿方块数量 ok
+	*		岛屿管理员 添加权限-无视周围有领地无法拓展 ok
+	*		岛屿管理员 添加权限-无视玩家岛屿权限 ok
+	*		岛屿管理员 添加权限-无视禁止命令 ok
+	*		修复岛屿管理员只能破坏岛屿方块,不能放置方块 ok
+	*		修复修改拓展文件价格后,导致机制失效问题 ok
+	*		添加指令 玩家用指令关闭底部显示 ok
+
 	看到此代码说明您已经解密或通过其他手段得到本插件源码!
 	申明:本插件为[史莱姆]开发!如您[发布/抄袭/转载]等任何侵权行为,都需承担法律责任,侵权解释权归作者本人所有!
 	©2016 - 2017 注明 : 2017/1/22 20:39:48
@@ -126,15 +128,15 @@ class Main extends Base implements Listener
 	
 	public function onLoad()
 	{
-		ZXDA::init(497,$this);
-		ZXDA::requestCheck();
+		//ZXDA::init(497,$this);
+		//ZXDA::requestCheck();
 	}
 	
 	public function onEnable()
 	{
 		$this->getServer()->getPluginManager()->registerEvents($this,$this);
 		$this->version = $this->getDescription()->getVersion();
-		$this->ZXDA_load();
+		//$this->ZXDA_load();
 		$this->bin_load();
 		$this->island_load();
 		@mkdir($this->getDataFolder());
@@ -179,6 +181,7 @@ class Main extends Base implements Listener
 				//公共区
 				$sender->sendMessage('§b -◎ §a/岛屿 模型 列表 §8< 查看服务器已安装的所有岛屿模型 >');//ok
 				$sender->sendMessage('§b -◎ §a/岛屿 购买 [岛屿名字] [岛屿模型名字] §8< 购买一个岛屿 >');//ok
+				$sender->sendMessage('§b -◎ §a/岛屿 底部 [开/关] §8< 岛屿底部开关 >');//ok
 				//岛主区
 				$sender->sendMessage('§b -◎ §a/岛屿 列表 §8< 查看自己所拥有的全部岛屿 >');//ok
 				$sender->sendMessage('§b -◎ §a/岛屿 回 [岛屿名字/岛屿编号] §8< 传送回岛屿 >');//ok
@@ -201,6 +204,21 @@ class Main extends Base implements Listener
 				$sender->sendMessage('§b -◎ §a/岛屿 生成器 2 §8< 设置生成器第二点 >');//ok
 				$sender->sendMessage('§b -◎ §a/岛屿 生成器 输出 §8< 设置完一二点,将方块输出到文件内 >');//ok
 				$sender->sendMessage('§e§1■■§2■■§3■■§5■■§6■■§7■■§a■■§b■■§c■■§e■■§4■■');
+				return true;
+			}
+			if($args[0] == '底部')
+			{
+				if(!isset($args[1]) or $args[1] != '开' and $args[1] != '关') return $sender->sendMessage('§b -◎ §a/岛屿 底部 [开/关] §8< 岛屿底部开关 >');
+				$info = $this->Player->get($name);
+				if($args[1] == '关')
+				{
+					$info['底部'] = False;
+				} else {
+					$info['底部'] = True;
+				}
+				$this->Player->set($name,$info);
+				$this->Player->save();
+				$sender->sendMessage('§b -◎ §a已将底部设为['.$args[1].']!');
 				return true;
 			}
 			if($args[0] == '创建')
@@ -831,7 +849,7 @@ class Main extends Base implements Listener
 					$sender->sendMessage('§b -◎ §6此指令只能在游戏内执行!');
 					return true;
 				}
-				if(count($this->SkyBlock->get('Player_IsIand_Name')[$name]) >= $this->Set['可购买岛屿'])
+				if(count($this->SkyBlock->get('Player_IsIand_Name')[$name]) >= $this->Set['可购买岛屿'] and !in_Array($name,$this->Set['管理员']))
 				{
 					$sender->sendMessage('§b -◎ §8最高可购买的岛屿为§4[' . $this->Set['可购买岛屿'] . ']§8个!');
 					return true;
@@ -1225,7 +1243,7 @@ class Main extends Base implements Listener
 				$event->setCancelled();
 				return;
 			}
-			if(isset($island[1]))
+			if(isset($island[1]) and !in_Array($name,$this->Set['管理员']))
 			{
 				$player->sendMessage('§b -◎ §8附近发现其他编号的领地,不能继续拓展岛屿领地!');
 				$event->setCancelled();
@@ -1244,14 +1262,14 @@ class Main extends Base implements Listener
 				{
 					$info['领地'] = 0;
 				}
-				if($info['领地'] > $this->Set['岛最多可拓展多少领地'])
+				if($info['领地'] > $this->Set['岛最多可拓展多少领地'] and !in_Array($name,$this->Set['管理员']))
 				{
 					$player->sendMessage('§b -◎ §8岛屿最高可拓展§4['.$this->Set['岛最多可拓展多少领地'].']§8格领地!');
 					$event->setCancelled();
 					return;
 				}
 				$money = EconomyAPI::getInstance()->myMoney($name);
-				if($money < $this->Set['单个领地价格'])
+				if($money < $this->Set['单个领地价格'] and !in_Array($name,$this->Set['管理员']))
 				{
 					$player->sendMessage('§b -◎ §8你没有多余的钱进行拓展领地!');
 					$event->setCancelled();
@@ -1261,7 +1279,7 @@ class Main extends Base implements Listener
 				$land[] = $x . ':' . $z;
 				$this->island->set($island[0],$land);
 				$this->island->save();
-				EconomyAPI::getInstance()->setMoney($player,$money - $this->Set['单个领地价格']);
+				if(!in_Array($name,$this->Set['管理员'])) EconomyAPI::getInstance()->setMoney($player,$money - $this->Set['单个领地价格']);
 				$Note = '';
 				$mc = $block->getLevel();
 				$mc->setBiomeId($x,$z,$info['生态环境']);
@@ -1272,7 +1290,7 @@ class Main extends Base implements Listener
 				$this->land->save();
 				if($this->Set['单个领地价格'] > 0)
 				{
-					$Note = '§9  [支出§4 ' . $this->Set['单个领地价格'] . ' §9]';
+					$Note = !in_Array($name,$this->Set['管理员']) ? '§9  [支出§4 ' . $this->Set['单个领地价格'] . ' §9]' : '§9 岛屿管理员权限';
 				}
 				if($this->Set['拓展领地显示方式'] == 'popup')
 				{
@@ -1305,11 +1323,9 @@ class Main extends Base implements Listener
 				{
 					$key = $this->in_array_key($txt,$all);
 					$info = $this->land->get($key);
-					$admin = '';
-					in_Array($name,$this->Set['管理员']) ? $admin = '§b管理员权限: ' : [];
 					if($info['岛主'] != $name And !in_Array($name,$info['共享者']) And !in_Array($name,$this->Set['管理员']))
 					{
-						$player->sendMessage($admin . '§b -◎ §8此处岛主为§4[' . $info['岛主'] . ']§8你无权限进行操作!§b ◎-');
+						$player->sendMessage('§b -◎ §8此处岛主为§4[' . $info['岛主'] . ']§8你无权限进行操作!§b ◎-');
 						$event->setCancelled();
 						return;
 					}
@@ -1429,7 +1445,7 @@ class Main extends Base implements Listener
 		if($this->in_arrays($txt,$all))
 		{
 			$info = $this->land->get($this->in_array_key($txt,$all));
-			if($info['岛主'] !== $name And !in_Array($name,$info['共享者']))
+			if($info['岛主'] !== $name And !in_Array($name,$info['共享者']) And !in_Array($name,$this->Set['管理员']))
 			{
 				$player->sendMessage('§b -◎ §8此处岛主为§4[' . $info['岛主'] . ']§8你无权限进行操作!');
 				$event->setCancelled();
@@ -1457,7 +1473,8 @@ class Main extends Base implements Listener
 				'黑名单原因' => False,
 				'背包' => False,
 				'VIP' => Array(),
-				'Note' => False
+				'Note' => False,
+				'底部' => True
 			);
 			$this->Player->set($Player_Name , $Player);
 			$this->Player->save();
@@ -1470,7 +1487,8 @@ class Main extends Base implements Listener
 			!isset($info['黑名单原因']) OR
 			!isset($info['背包']) OR
 			!isset($info['VIP']) OR
-			!isset($info['Note'])
+			!isset($info['Note']) OR
+			!isset($info['底部'])
 			)
 			{
 				$Player = Array(
@@ -1478,7 +1496,8 @@ class Main extends Base implements Listener
 					'黑名单原因' => False,
 					'背包' => False,
 					'VIP' => Array(),
-					'Note' => False
+					'Note' => False,
+					'底部' => True
 				);
 				$this->Player->set($Player_Name , $Player);
 				$this->Player->save();
@@ -1704,13 +1723,9 @@ class Main extends Base implements Listener
 						strstr($concent , '{共享列表}') ? $concent = strtr($concent , Array('{共享列表}' => $gx)) : [];
 						strstr($concent , '{领地面积}') ? $concent = strtr($concent , Array('{领地面积}' => count($this->island->get($key)))) : [];
 						strstr($concent , '{生态环境}') ? $concent = strtr($concent , Array('{生态环境}' => $this->getBiomeName($info['生态环境']))) : [];
-						if($this->Set['领地显示方式'] == 'popup')
+						if($this->Player->get($name)['底部'])
 						{
-							$player->sendPopup("$concent");
-						}
-						else
-						{
-							$player->sendTip("$concent");
+							$this->Set['领地显示方式'] == 'popup' ? $player->sendPopup("$concent") : $player->sendTip("$concent");
 						}
 						if(in_Array($name,$info['黑名单']))
 						{
@@ -1734,7 +1749,7 @@ class Main extends Base implements Listener
 		{
 			foreach($this->Set['禁止命令'] as $command)
 			{
-				if(strstr('/'.$command,$sendMessage))
+				if(strstr('/'.$command,$sendMessage) and !in_Array($name,$this->Set['管理员']))
 				{
 					$player->sendMessage('§b -◎ §8岛屿世界内不允许使用此指令!§b ◎-');
 					$event->setCancelled();
