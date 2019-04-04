@@ -1,0 +1,12 @@
+name: print_journalists
+main: print_journalists\print_journalists
+version: 1.0.0
+api: [3.0.0,2.0.0]
+load: POSTWORLD
+author: slm47888
+depend: ["ZXDAKernel"]
+
+commands:
+  绵羊印记:
+    usage: /绵羊印记 help
+    description: 绵羊印记插件帮助
